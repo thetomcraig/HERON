@@ -1,5 +1,4 @@
 # HERON
-===
 Hero of Alexandria was a mathematician and engineer who was active in his native city of Alexandria, Roman Egypt.  
 He was the inventor of the aeolipile (an early example of steam engine), and a designer other mechanical devices.
 
@@ -8,9 +7,7 @@ This is a modular setup, allowing for the addition and alteration of various alg
 
 
 # Credits  
-=== 
 
-Readme Notes:  
-====  
+## Readme Notes:  
 Research Machines plc. (2004). The Hutchinson dictionary of scientific biography.  
 https://heronrobots.com
