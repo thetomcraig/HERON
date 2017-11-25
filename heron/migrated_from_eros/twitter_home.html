@@ -1,0 +1,40 @@
+{% extends 'integrations/base.html' %}
+
+{% block main %}
+
+    <form action="#" method="get">
+        <input name="go_back_to_home" type="submit" class="btn btn-default" value="Home">
+    </form>
+
+
+    <form action="#" method="get">
+        <input name="scrape_top_twitter_people" type="submit" class="btn btn-default" value="Scrape All Twitter Users">
+    </form>
+
+
+    <form action="#" method="get">
+        <input name="update_top_twitter_people" type="submit" class="btn btn-default" value="Update Twitter Users">
+    </form>
+
+    {% if twitter_people %}
+        <table align="center">
+        {% for twitter_person in twitter_people %}
+            <div class="sub">
+                <a name="go_to_twitter_person" 
+                                href="/integrations/twitter_person_detail/{{ twitter_person.username }}"
+                                value={{ twitter_person.username }}
+                                class="invisible-button">
+
+                    <div class="image-cropper">
+                        <img src={{ twitter_person.avatar }} align="middle"/>
+                    </div>
+                    <h5>{{ twitter_person.real_name}}</h5> 
+                </a>
+            </div>
+        {% endfor %}
+        </table>
+
+    {% else %}
+            <p>No twitter people in the database.</p>
+    {% endif %}
+{% endblock %}

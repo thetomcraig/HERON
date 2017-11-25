@@ -1,0 +1,19 @@
+{% extends 'integrations/base.html' %}
+{% block main %}
+
+<form action='#' method='get'>
+	<input name='go_back_to_list' type='submit' class='btn btn-default' value='Home'>
+	<input name='new_post' type='submit' class='btn btn-default' value='New Post'>
+	<input name='clear_conversation' type='submit' class='btn btn-default' value='Clear Conversation'>
+</form>
+
+<div align='middle'>
+    <h4>@{{ person_username }}</h2>
+    <h4>@{{ partner_username }}</h2>
+</div>
+
+<div class='row small-buffer'>
+
+{% include "integrations/sentence_list.html" with table_title='' sentences=sentences %}
+
+{% endblock %}

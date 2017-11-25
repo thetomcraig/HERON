@@ -1,0 +1,13 @@
+<td>
+	{% for word_and_id in twitter_post %}
+		{% for c in colors %}
+			{% if forloop.counter0 == word_and_id.1 %} 
+				<td class="text-center" bgcolor={{ c }}>
+					<button type="button" class="invisible-button">
+						<font color="white">{{ word_and_id.0 }}</font>
+					</button>
+				</td>
+			{% endif %}
+		{% endfor %}
+	{% endfor %}
+</td>
