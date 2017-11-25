@@ -105,31 +105,22 @@ def scrape_twitter_bot(bot):
     response_data['new tweets'] = len(tweets)
     response_data['tweets'] = {}
 
-    new_post_ids = []
     for idx, tweet in enumerate(tweets):
         words = tweet.split()
-
-        final_tweet = ""
         for word in words:
             if "@" in word:
                 bot.twittermention_set.create(content=word)
-                word = settings.USER_TOKEN
             if "http" in word:
                 bot.twitterlink_set.create(content=word)
-                word = settings.LINK_TOKEN
             if "#" in word:
                 bot.twitterhashtag_set.create(content=word)
-                word = settings.TAG_TOKEN
 
-            final_tweet = final_tweet + word + " "
-        final_tweet = final_tweet[:-1]
-
-        response_data['tweets'][idx] = final_tweet
+        response_data['tweets'][idx] = tweet
 
         h = HTMLParser.HTMLParser()
-        final_tweet = h.unescape(final_tweet.decode('utf-8'))
+        tweet = h.unescape(tweet.decode('utf-8'))
 
-        post = TwitterPost.objects.create(author=bot, content=final_tweet)
+        post = TwitterPost.objects.create(author=bot, content=tweet)
 
         create_post_cache(post, bot.twitterpostcache_set)
 
