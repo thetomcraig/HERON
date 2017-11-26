@@ -1,7 +1,8 @@
+import HTMLParser
 import nltk
 from nltk.probability import FreqDist
+from rake_nltk import Rake
 import random
-import HTMLParser
 
 from django.conf import settings
 
@@ -160,69 +161,71 @@ def get_or_create_conversation_json(bot1_id, bot2_id):
     return conversation_json
 
 
-def clear_twitter_conversation(bot_username, partner_username):
-    conversation = get_or_create_conversation(bot_username, partner_username)
-    if conversation:
-        conversation.twitterconversationpost_set.all().delete()
-        return True
-    return False
+def clear_twitter_conversation(bot1_id, bot2_id, conversation=None):
+    if not conversation:
+        conversation = get_or_create_conversation(bot1_id, bot2_id)
+
+    for convo_post in conversation.twitterconversationpost_set.all():
+        convo_post.post.delete()
+        convo_post.delete()
+    conversation.delete()
+    return True
 
 
-def clear_all_twitter_conversations(bot_username):
-    bot = TwitterBot.objects.get(username=bot_username)
+def clear_all_twitter_conversations(bot_id):
+    bot = TwitterBot.objects.get(id=bot_id)
     conversations = TwitterConversation.objects.filter(author=bot)
     for c in conversations:
-        c.delete()
+        clear_twitter_conversation(c)
+
+
+def get_next_speaker_and_partner(conversation):
+    last_post = conversation.last()
+    partner = last_post.author
+
+    bot1 = last_post.conversation.author
+    bot2 = last_post.conversation.partner
+    if bot1 == partner:
+        next_speaker = bot2
+    else:
+        next_speaker = bot1
+
+    return next_speaker, partner
+
+
+def get_key_phrases(conversation):
+    last_post = conversation.last()
+    r = Rake()
+    r.extract_keywords_from_text(last_post.post.content)
+    # TODO Filter further
+    phrases = r.get_ranked_phrases()
+    return phrases
+
+
+def generate_response_with_key_phrases(key_phrases, author, partner):
+    # Searh the author's tweets for something with that phrase
+    # Search responess (containing '@') and replace that mention with the partner
+    # Use the response as a template for the new response
+    return 'STUB'
 
 
 def generate_new_conversation_post_text(current_conversation):
-    sorted_conversation = current_conversation.twitterconversationpost_set.order_by('index').all()
-    last_post = sorted_conversation.last()
-    last_speaker = last_post.post.author if last_post else current_conversation.author
-    next_speaker = \
-        current_conversation.author if current_conversation.author != last_speaker else current_conversation.partner
+    """
+    Query set of the conversation posts in the current conversation, sorted chronologically
+    """
+    index = current_conversation.last().index
+    next_speaker, partner = get_next_speaker_and_partner(current_conversation)
+    key_phrases = get_key_phrases(current_conversation)
+    reply = generate_response_with_key_phrases(key_phrases, next_speaker, partner)
 
-    # Aanalyze what's been said
-    index = 0
-    for p in sorted_conversation:
-        index += 1
-        # fancy alg here
-        pass
-
-    # Pick something new to say in response
-    posts = [x.content for x in next_speaker.twitterpost_set.all()]
-    retweets = [x for x in posts if 'RT' in x and settings.LINK_TOKEN not in x]
-
-    reply_source = retweets if len(retweets) else posts
-    # pick a random retweet to respond with
-    if len(reply_source) > 1:
-        reply = reply_source[random.randrange(0, len(reply_source)) - 1]
-    reply = reply_source[0]
-    # TODO - checking/scraping here if there are no responsed to work with 
-    # replace the user token tag with the user who is in the convo
-    reply = reply.replace(settings.USER_TOKEN, '@' + last_speaker.username, 1)
-    # Remove multiple tags
-    reply = reply.replace(settings.USER_TOKEN, '')
-    # replace the hashtag token with a random hashtag
-    hashtags = [x.content for x in next_speaker.twitterhashtag_set.all()]
-    random_hashtag = 'HASHTAG'
-    if len(hashtags):
-        random_hashtag = hashtags[random.randrange(0, len(hashtags) - 1)]
-    reply = reply.replace(settings.TAG_TOKEN, random_hashtag, 1)
-    # Remove multiple tags
-    reply = reply.replace(settings.TAG_TOKEN, '')
-
-    # Remove RT
-    reply = reply.replace('RT', '')
-    # Fix spacing
-    reply = reply.replace('  ', ' ')
     return index, next_speaker, reply
 
 
 def add_to_twitter_conversation(bot_username, partner_username):
     conversation = get_or_create_conversation(bot_username, partner_username)
+    sorted_conversation = conversation.twitterconversationpost_set.order_by('index').all()
 
-    new_index, new_author, new_content = generate_new_conversation_post_text(conversation)
+    new_index, new_author, new_content = generate_new_conversation_post_text(sorted_conversation)
     new_post = new_author.twitterpost_set.create(content=new_content)
 
     new_convo_post = TwitterConversationPost.objects.create(

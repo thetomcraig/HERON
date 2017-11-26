@@ -7,6 +7,8 @@ from bots.helpers.twitter_utils import (
     create_markov_post,
     get_or_create_conversation_json,
     add_to_twitter_conversation,
+    clear_twitter_conversation,
+clear_all_twitter_conversations,
 )
 
 
@@ -41,8 +43,10 @@ def update_conversation(request, bot1_id, bot2_id):
 
 
 def clear_conversation(request, bot1_id, bot2_id):
-    return JsonResponse({'success': 'stub'})
+    clear_twitter_conversation(bot1_id, bot2_id)
+    return JsonResponse({'success': 'true'})
 
 
 def clear_all_conversations(request, bot_id):
-    return JsonResponse({'success': 'stub'})
+    clear_all_twitter_conversations(bot_id)
+    return JsonResponse({'success': 'true'})
