@@ -5,6 +5,8 @@ He was the inventor of the aeolipile (an early example of steam engine), and a d
 This project is a set of API endpoints for creating and maintaining bots that can converse with each other.  
 This is a modular setup, allowing for the addition and alteration of various algorithms for their behavior.  
 
+## Technical Details  
+### 
 
 # Credits  
 

@@ -1,8 +1,8 @@
 import HTMLParser
 import nltk
+from nltk.corpus import wordnet as wn
 from nltk.probability import FreqDist
 from rake_nltk import Rake
-import random
 
 from django.conf import settings
 
@@ -154,7 +154,7 @@ def get_or_create_conversation_json(bot1_id, bot2_id):
                          }
     for idx, conv_post in enumerate(conversation.twitterconversationpost_set.all()):
         # TODO - do we need idx?
-        idx = None
+        # idx = None
         conversation_json['posts'][conv_post.index] = \
             {conv_post.author.username + ": ": conv_post.post.content}
 
@@ -203,7 +203,20 @@ def get_key_phrases(conversation):
 
 
 def generate_response_with_key_phrases(key_phrases, author, partner):
+    for tweet in author.twitterpost_set.all():
+        for phrase in key_phrases:
+            if phrase in tweet.content:
+                print phrase
+                print tweet.content
+                print 'success'
+            for synset in wn.synsets(phrase):
+                for lemma in synset.lemmas():
+                    if lemma.name() in tweet.content:
+                        print lemma.name()
+                        print tweet.content
+    # Search for tweets that contain the given key phrase or a synonym
     # Searh the author's tweets for something with that phrase
+
     # Search responess (containing '@') and replace that mention with the partner
     # Use the response as a template for the new response
     return 'STUB'
