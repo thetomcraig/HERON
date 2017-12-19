@@ -1,4 +1,5 @@
 import HTMLParser
+from collections import defaultdict
 import nltk
 from nltk.corpus import wordnet as wn
 from nltk.probability import FreqDist
@@ -179,18 +180,23 @@ def clear_all_twitter_conversations(bot_id):
         clear_twitter_conversation(c)
 
 
-def get_next_speaker_and_partner(conversation):
-    last_post = conversation.last()
-    partner = last_post.author
+def get_next_speaker_and_last_speaker(conversation_posts, author, partner):
+    """
+    Figure out the order of speech
+    Start by guessing, that the author spoke last
+    If there are more than 0 posts and in it was actually the parter who spoke last,
+    swith our assignments
+    """
+    last_speaker = author
+    next_speaker = partner
 
-    bot1 = last_post.conversation.author
-    bot2 = last_post.conversation.partner
-    if bot1 == partner:
-        next_speaker = bot2
-    else:
-        next_speaker = bot1
+    last_post = conversation_posts.last()
+    if last_post:
+        if last_post.author == next_speaker:
+            last_speaker = partner
+            next_speaker = author
 
-    return next_speaker, partner
+    return next_speaker, last_speaker
 
 
 def get_key_phrases(conversation):
@@ -203,17 +209,24 @@ def get_key_phrases(conversation):
 
 
 def generate_response_with_key_phrases(key_phrases, author, partner):
+    if not len(key_phrases):
+        return 'first post'
+    key_phrase_match_map = defaultdict(list)
     for tweet in author.twitterpost_set.all():
         for phrase in key_phrases:
             if phrase in tweet.content:
-                print phrase
-                print tweet.content
-                print 'success'
+                key_phrase_match_map[phrase].append(tweet.content)
             for synset in wn.synsets(phrase):
                 for lemma in synset.lemmas():
                     if lemma.name() in tweet.content:
-                        print lemma.name()
-                        print tweet.content
+                        key_phrase_match_map[lemma.name()].append(tweet.content)
+
+    for k,v in key_phrase_match_map.iteritems():
+        print 'KEY'
+        print k
+        print 'V'
+        print v
+
     # Search for tweets that contain the given key phrase or a synonym
     # Searh the author's tweets for something with that phrase
 
@@ -222,23 +235,37 @@ def generate_response_with_key_phrases(key_phrases, author, partner):
     return 'STUB'
 
 
-def generate_new_conversation_post_text(current_conversation):
+def generate_new_conversation_post_text(conversation):
     """
     Query set of the conversation posts in the current conversation, sorted chronologically
     """
-    index = current_conversation.last().index
-    next_speaker, partner = get_next_speaker_and_partner(current_conversation)
-    key_phrases = get_key_phrases(current_conversation)
-    reply = generate_response_with_key_phrases(key_phrases, next_speaker, partner)
+    sorted_conversation_posts = conversation.twitterconversationpost_set.order_by('index').all()
+
+    last_post = sorted_conversation_posts.last()
+    index = 0
+    new_conversation = True
+    if last_post:
+        index = last_post.index
+        new_conversation = False
+
+    next_speaker, last_speaker = get_next_speaker_and_last_speaker(sorted_conversation_posts,
+                                                                   conversation.author,
+                                                                   conversation.partner)
+
+    if new_conversation:
+        key_phrases = []
+    else:
+        key_phrases = get_key_phrases(sorted_conversation_posts)
+    reply = generate_response_with_key_phrases(key_phrases, next_speaker, last_speaker)
 
     return index, next_speaker, reply
 
 
 def add_to_twitter_conversation(bot_username, partner_username):
+    
     conversation = get_or_create_conversation(bot_username, partner_username)
-    sorted_conversation = conversation.twitterconversationpost_set.order_by('index').all()
 
-    new_index, new_author, new_content = generate_new_conversation_post_text(sorted_conversation)
+    new_index, new_author, new_content = generate_new_conversation_post_text(conversation)
     new_post = new_author.twitterpost_set.create(content=new_content)
 
     new_convo_post = TwitterConversationPost.objects.create(
