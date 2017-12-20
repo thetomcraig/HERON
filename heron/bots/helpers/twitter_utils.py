@@ -245,7 +245,7 @@ def generate_new_conversation_post_text(conversation):
     index = 0
     new_conversation = True
     if last_post:
-        index = last_post.index
+        index = last_post.index + 1
         new_conversation = False
 
     next_speaker, last_speaker = get_next_speaker_and_last_speaker(sorted_conversation_posts,
@@ -262,7 +262,6 @@ def generate_new_conversation_post_text(conversation):
 
 
 def add_to_twitter_conversation(bot_username, partner_username):
-    
     conversation = get_or_create_conversation(bot_username, partner_username)
 
     new_index, new_author, new_content = generate_new_conversation_post_text(conversation)

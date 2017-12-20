@@ -8,7 +8,7 @@ from bots.helpers.twitter_utils import (
     get_or_create_conversation_json,
     add_to_twitter_conversation,
     clear_twitter_conversation,
-clear_all_twitter_conversations,
+    clear_all_twitter_conversations,
 )
 
 
