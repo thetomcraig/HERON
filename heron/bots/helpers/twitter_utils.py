@@ -1,19 +1,17 @@
 import HTMLParser
 from collections import defaultdict
+
 import nltk
+from bots.helpers.TweepyScraper import TweepyScraper
+from bots.models.twitter import (TwitterBot, TwitterConversation,
+                                 TwitterConversationPost, TwitterPost)
+from django.conf import settings
 from nltk.corpus import wordnet as wn
+from nltk.corpus import webtext
 from nltk.probability import FreqDist
 from rake_nltk import Rake
 
-from django.conf import settings
-
-from bots.models.twitter import TwitterPost, TwitterBot, TwitterConversation, TwitterConversationPost
-from bots.helpers.TweepyScraper import TweepyScraper
-
-from .utils import (
-    replace_tokens,
-    create_post_cache,
-)
+from .utils import create_post_cache, replace_tokens
 
 
 def get_top_twitter_users(limit=50):
@@ -202,15 +200,22 @@ def get_next_speaker_and_last_speaker(conversation_posts, author, partner):
 def get_key_phrases(conversation):
     last_post = conversation.last()
     r = Rake()
-    r.extract_keywords_from_text(last_post.post.content)
-    # TODO Filter further
-    phrases = r.get_ranked_phrases()
+    phrases = []
+    content = last_post.post.content
+    if content:
+        r.extract_keywords_from_text(content)
+        # TODO Filter further
+        phrases = r.get_ranked_phrases()
+
     return phrases
 
 
 def generate_response_with_key_phrases(key_phrases, author, partner):
     if not len(key_phrases):
         return 'first post'
+    #  Will map key phrase to list of tweets that contain one of those phrases or a synonym
+    #  Search for tweets that contain the given key phrase or a synonym
+    #  Searh the author's tweets for something with that phrase
     key_phrase_match_map = defaultdict(list)
     for tweet in author.twitterpost_set.all():
         for phrase in key_phrases:
@@ -221,17 +226,23 @@ def generate_response_with_key_phrases(key_phrases, author, partner):
                     if lemma.name() in tweet.content:
                         key_phrase_match_map[lemma.name()].append(tweet.content)
 
-    for k,v in key_phrase_match_map.iteritems():
+    for k, v in key_phrase_match_map.iteritems():
         print 'KEY'
         print k
         print 'V'
         print v
 
-    # Search for tweets that contain the given key phrase or a synonym
-    # Searh the author's tweets for something with that phrase
+    return 'STUB'
 
-    # Search responess (containing '@') and replace that mention with the partner
-    # Use the response as a template for the new response
+
+def get_web_text_response(conversation_posts):
+    """
+    Use nltk's webtext to get a response then twitter-fy it
+    """
+    firefox_raw = webtext.raw(u'overheard.txt')
+    print type(firefox_raw)
+    print firefox_raw
+    print firefox_raw[:100]
     return 'STUB'
 
 
@@ -256,7 +267,8 @@ def generate_new_conversation_post_text(conversation):
         key_phrases = []
     else:
         key_phrases = get_key_phrases(sorted_conversation_posts)
-    reply = generate_response_with_key_phrases(key_phrases, next_speaker, last_speaker)
+    # reply = generate_response_with_key_phrases(key_phrases, next_speaker, last_speaker)
+    reply = get_web_text_response(sorted_conversation_posts)
 
     return index, next_speaker, reply
 
