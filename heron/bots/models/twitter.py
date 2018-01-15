@@ -13,6 +13,7 @@ class TwitterBot(base.Bot):
 
 class TwitterPost(base.Sentence):
     author = models.ForeignKey(TwitterBot, default=None, null=True)
+    tweet_id = models.IntegerField()
 
 
 class TwitterPostCache(base.SentenceCache):

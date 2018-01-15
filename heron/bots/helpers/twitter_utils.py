@@ -1,7 +1,9 @@
 import HTMLParser
 from collections import defaultdict
-
+import mechanize
+from bs4 import BeautifulSoup
 import nltk
+
 from bots.helpers.TweepyScraper import TweepyScraper
 from bots.models.twitter import (TwitterBot, TwitterConversation,
                                  TwitterConversationPost, TwitterPost)
@@ -26,18 +28,6 @@ def get_top_twitter_users(limit=50):
     return names_and_unames
 
 
-def get_tweet_replies(username, tweet_id):
-    t = TweepyScraper(
-        settings.TWEEPY_CONSUMER_KEY,
-        settings.TWEEPY_CONSUMER_SECRET,
-        settings.TWEEPY_ACCESS_TOKEN,
-        settings.TWEEPY_ACCESS_TOKEN_SECRET)
-
-    names_and_unames = t.get_tweet_replies(username, tweet_id)
-
-    return names_and_unames
-
-
 def get_top_twitter_bots(limit=50):
     # TODO Use order_by
     top_bots = TwitterBot.objects.all()
@@ -47,8 +37,8 @@ def get_top_twitter_bots(limit=50):
     return bot_data
 
 
-def scrape(bot_id):
-    bot = TwitterBot.objects.get(id=bot_id)
+def scrape(username):
+    bot = TwitterBot.objects.get(username=username)
     scrape_response = scrape_twitter_bot(bot)
     print scrape_response
     data = {'success': True, 'new tweets': scrape_response['new tweets'], 'tweets':
@@ -117,7 +107,9 @@ def scrape_twitter_bot(bot):
     response_data['new tweets'] = len(tweets)
     response_data['tweets'] = {}
 
-    for idx, tweet in enumerate(tweets):
+    for idx, tweet_data in enumerate(tweets):
+        tweet = tweet_data[0]
+        tweet_id = tweet_data[1]
         words = tweet.split()
         for word in words:
             if "@" in word:
@@ -127,12 +119,12 @@ def scrape_twitter_bot(bot):
             if "#" in word:
                 bot.twitterhashtag_set.create(content=word)
 
-        response_data['tweets'][idx] = tweet
+        response_data['tweets'][idx] = str(tweet_data)
 
         h = HTMLParser.HTMLParser()
         tweet = h.unescape(tweet.decode('utf-8'))
 
-        post = TwitterPost.objects.create(author=bot, content=tweet)
+        post = TwitterPost.objects.create(author=bot, content=tweet, tweet_id=tweet_id)
 
         create_post_cache(post, bot.twitterpostcache_set)
 
@@ -283,6 +275,50 @@ def generate_new_conversation_post_text(conversation):
     reply = get_web_text_response(sorted_conversation_posts)
 
     return index, next_speaker, reply
+
+
+def get_tweets_over_reply_threshold(username, threshold=1):
+    length_limiter = 1
+    tweets = {}
+    bot = TwitterBot.objects.get(username=username)
+    for tweet in bot.twitterpost_set.all()[:length_limiter]:
+        response = get_tweet_replies(username, tweet.tweet_id)
+        num_replies = response['num_replies']
+        if num_replies >= threshold:
+            tweets[tweet.tweet_id] = {'content': tweet.content,
+                                      'replies': [response['data']]}
+    return tweets
+
+
+def get_tweet_replies(username, tweet_id):
+    browser = mechanize.Browser()
+    ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 (compatible;)'
+    browser.addheaders = [('User-Agent', ua), ('Accept', '*/*')]
+
+    url = 'https://twitter.com/{0}/status/{1}'.format(username, tweet_id)
+    browser.open(url)
+    html = browser.response().read().decode('utf-8', 'ignore')
+    raw = BeautifulSoup(html, "html.parser")
+    replies_div = raw.find('div', class_='replies-to')
+    replies = replies_div.find_all('div', class_='ThreadedConversation-tweet')
+
+    # If there are no replies, stop
+    all_tweets = []
+    for reply in replies:
+        tweets = reply.find_all('div', class_='tweet')
+        all_tweets.extend(tweets)
+
+    all_responses = []
+    for tweet in all_tweets:
+        content = tweet.find_all('div', class_='content')[0]
+        inner_content = content.find_all('div', class_='js-tweet-text-container')[0]
+        text = inner_content.find('p')
+
+        screen_name = tweet['data-screen-name']
+        reply_data = {screen_name: text.text}
+        all_responses.append(reply_data)
+
+    return {'num_replies': len(all_responses), 'data': all_responses}
 
 
 def add_to_twitter_conversation(bot_username, partner_username):

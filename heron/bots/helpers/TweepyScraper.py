@@ -48,41 +48,11 @@ class TweepyScraper:
                 return people_dict
         return people_dict
 
-    def get_tweets_from_user(self, screen_name, limit):
+    def get_tweets_from_user(self, username, limit):
         outtweets = []
-        alltweets = self.api.user_timeline(screen_name=screen_name, count=limit)
-        outtweets = [tweet.text.encode("utf-8") for tweet in alltweets]
+        alltweets = self.api.user_timeline(screen_name=username, count=limit)
+        outtweets = [(tweet.text.encode("utf-8"), tweet.id) for tweet in alltweets]
         return outtweets
-
-    #  def get_tweet_replies(self, tweet_id):
-        #  outtweets = []
-        #  alltweets = self.api.related_results(id=tweet_id)
-
-    def get_tweet_replies(self, username, tweet_id):
-        browser = mechanize.Browser()
-        ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 (compatible;)'
-        browser.addheaders = [('User-Agent', ua), ('Accept', '*/*')]
-
-        url = 'https://twitter.com/{0}/status/{1}'.format(username, tweet_id)
-        browser.open(url)
-        html = browser.response().read().decode('utf-8', 'ignore')
-        raw = BeautifulSoup(html, "html.parser")
-        replies_div = raw.find('div', class_='replies-to')
-        replies = replies_div.find_all('div', class_='ThreadedConversation-tweet')
-        all_tweets = []
-        for reply in replies:
-            tweets = reply.find_all('div', class_='tweet')
-            all_tweets.extend(tweets)
-
-        all_texts = []
-        for tweet in all_tweets:
-            content = tweet.find_all('div', class_='content')[0]
-            inner_content = content.find_all('div', class_='js-tweet-text-container')[0]
-            text = inner_content.find('p')
-            all_texts.append(text.text)
-            print text
-
-        return {'data': all_texts}
 
     def findTrends(self):
         # This will be a one element dict
@@ -107,7 +77,9 @@ class TweepyScraper:
         return results
 
     def stream(self, tag):
-        '''Setting up the streamer'''
+        """
+        Setting up the streamer
+        """
         l = StdOutListener()
         # There are different kinds of streams: public stream, user stream, multi-user streams
         # In this example follow tag
