@@ -1,15 +1,11 @@
+from bots.helpers.twitter_utils import (add_to_twitter_conversation,
+                                        clear_all_twitter_conversations,
+                                        clear_twitter_conversation,
+                                        create_markov_post, get_info,
+                                        get_or_create_conversation_json,
+                                        get_top_twitter_bots,
+                                        get_tweet_replies, scrape)
 from django.http import JsonResponse
-
-from bots.helpers.twitter_utils import (
-    get_top_twitter_bots,
-    get_info,
-    scrape,
-    create_markov_post,
-    get_or_create_conversation_json,
-    add_to_twitter_conversation,
-    clear_twitter_conversation,
-    clear_all_twitter_conversations,
-)
 
 
 def list_all_bots(limit=None):
@@ -24,6 +20,11 @@ def get_bot_info(request, bot_id):
 
 def scrape_bot(request, bot_id):
     response_data = scrape(bot_id)
+    return JsonResponse(response_data)
+
+
+def get_replies_for_tweet(request, username, tweet_id):
+    response_data = get_tweet_replies(username, tweet_id)
     return JsonResponse(response_data)
 
 

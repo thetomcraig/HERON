@@ -26,6 +26,18 @@ def get_top_twitter_users(limit=50):
     return names_and_unames
 
 
+def get_tweet_replies(username, tweet_id):
+    t = TweepyScraper(
+        settings.TWEEPY_CONSUMER_KEY,
+        settings.TWEEPY_CONSUMER_SECRET,
+        settings.TWEEPY_ACCESS_TOKEN,
+        settings.TWEEPY_ACCESS_TOKEN_SECRET)
+
+    names_and_unames = t.get_tweet_replies(username, tweet_id)
+
+    return names_and_unames
+
+
 def get_top_twitter_bots(limit=50):
     # TODO Use order_by
     top_bots = TwitterBot.objects.all()
