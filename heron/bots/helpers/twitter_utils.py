@@ -286,6 +286,7 @@ def get_tweets_over_reply_threshold(username, threshold=1):
     browser.addheaders = [('User-Agent', ua), ('Accept', '*/*')]
 
     tweets_over_threshold = {}
+    return tweets_over_threshold
     # Get viable top level tweets, that have reply count over the threshold
     for tweet in bot.twitterpost_set.all()[:length_limiter]:
         reply_data = get_tweet_replies(browser, username, tweet.tweet_id)
@@ -318,7 +319,9 @@ def get_tweet_replies(browser, username, tweet_id):
     replies = replies_div.find_all('div', class_='ThreadedConversation-tweet')
 
     # If there are no replies, stop
-    # Otherwise, keep going
+    if not replies:
+        return {}
+
     all_tweets = []
     for reply in replies:
         tweets = reply.find_all('div', class_='tweet')
