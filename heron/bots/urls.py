@@ -1,11 +1,12 @@
-from django.conf.urls import url
 from bots import api_views
+from django.conf.urls import url
 
 urlpatterns = [
     url(r'^list_all_bots/', api_views.list_all_bots),
     url(r'^scrape_bot/(?P<username>[a-zA-Z]+)/$', api_views.scrape_bot),
-    url(r'^get_replies_for_tweet/(?P<username>[a-zA-Z]+)/(?P<tweet_id>[0-9]+)$', api_views.get_replies_for_tweet),
-    url(r'^get_tweets_over_threshold/(?P<username>[a-zA-Z]+)/(?P<threshold>[0-9]+)$', api_views.get_tweets_over_threshold),
+    url(r'^get_replies_for_tweet/(?P<username>[a-zA-Z]+)/(?P<tweet_id>[0-9]+)/$', api_views.get_replies_for_tweet),
+    url(r'^get_tweets_over_threshold/(?P<username>[a-zA-Z]+)/(?P<threshold>[0-9]+)/(?P<scrape_mode>[a-zA-Z_]+)/$',
+        api_views.get_tweets_over_threshold),
     url(r'^get_bot_info/([0-9]+)/$', api_views.get_bot_info),
     url(r'^create_post/([0-9]+)/$', api_views.create_post),
     url(r'^get_conversation/(?P<bot1_id>[0-9]+)/(?P<bot2_id>[0-9]+)/$', api_views.get_conversation),

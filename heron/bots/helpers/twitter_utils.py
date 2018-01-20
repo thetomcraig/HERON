@@ -1,12 +1,12 @@
 import HTMLParser
 from collections import defaultdict
-import mechanize
-from bs4 import BeautifulSoup
-import nltk
 
+import mechanize
+import nltk
 from bots.helpers.TweepyScraper import TweepyScraper
 from bots.models.twitter import (TwitterBot, TwitterConversation,
                                  TwitterConversationPost, TwitterPost)
+from bs4 import BeautifulSoup
 from django.conf import settings
 from nltk.corpus import wordnet as wn
 from nltk.corpus import webtext
@@ -277,8 +277,20 @@ def generate_new_conversation_post_text(conversation):
     return index, next_speaker, reply
 
 
-def get_tweets_over_reply_threshold(username, threshold=1):
-    length_limiter = 1
+def get_tweets_over_reply_threshold(username, scrape_mode='recurse', threshold=1):
+    if scrape_mode == 'recurse':
+        reply_function = recursively_get_replies
+    elif scrape_mode == 'highest_reply_number':
+        reply_function = highest_reply_number
+    elif scrape_mode == 'single_reply':
+        reply_function = single_reply
+    elif scrape_mode == 'first_responder':
+        reply_function = first_responder
+    else:
+        reply_function = None
+    print('method: %s' % str(reply_function))
+
+    length_limiter = 5
 
     bot = TwitterBot.objects.get(username=username)
     browser = mechanize.Browser()
@@ -286,27 +298,71 @@ def get_tweets_over_reply_threshold(username, threshold=1):
     browser.addheaders = [('User-Agent', ua), ('Accept', '*/*')]
 
     tweets_over_threshold = {}
-    return tweets_over_threshold
     # Get viable top level tweets, that have reply count over the threshold
+    print "looping on the bot's tweets"
     for tweet in bot.twitterpost_set.all()[:length_limiter]:
         reply_data = get_tweet_replies(browser, username, tweet.tweet_id)
         num_replies = len(reply_data)
         if num_replies >= threshold:
-            tweets_over_threshold[tweet.tweet_id] = {'content': tweet.content,
-                                                     'replies': recursively_get_replies(browser, username,
-                                                                                        tweet.tweet_id)}
+            print('lots of replies; recursing')
+            tweets_over_threshold[tweet.tweet_id] = \
+                {'content': tweet.content, 'replies': reply_function(browser, username, tweet.tweet_id)}
+            return tweets_over_threshold
     # Recursive find replies to get the entire thread for each tweet
     return tweets_over_threshold
 
 
-def recursively_get_replies(browser, username, tweet_id):
+def highest_reply_number(browser, username, tweet_id):
+    print('getting replies for %s' % tweet_id)
+    all_responses = get_tweet_replies(browser, username, tweet_id)
+    highest_reply_number = 0
+    tweet_with_highest_reply_number = None
+    print 'looping on top level responses'
+    if len(all_responses) > 0:
+        for reply_id, response_data in all_responses.iteritems():
+            reply_number = get_tweet_replies(browser, response_data['author'], reply_id)
+            print('reply number for reply %d is: %d' % (int(reply_id), reply_number))
+            if reply_number == 0:
+                return {}
+            if reply_number > highest_reply_number:
+                highest_reply_number = reply_number
+                tweet_with_highest_reply_number = response_data
+        return {'author': tweet_with_highest_reply_number['author'],
+                'content': tweet_with_highest_reply_number['content'],
+                'reply': highest_reply_number(browser, tweet_with_highest_reply_number['author'], reply_id)}
+
+
+def single_reply(browser, username, tweet_id):
+    print('getting replies for %s' % tweet_id)
     replies = {}
     all_responses = get_tweet_replies(browser, username, tweet_id)
-    if len(all_responses) == 0:
-        return {}
-    for reply_id, response_data in all_responses.iteritems():
+    if len(all_responses) > 0:
+        for reply_id, response_data in all_responses.iteritems():
+            replies[reply_id] = {'author': response_data['author'], 'content': response_data['content'], 'replies':
+                                 recursively_get_replies(browser, username, reply_id)}
+    return replies
+
+
+def first_responder(browser, username, tweet_id):
+    print('getting replies for %s' % tweet_id)
+    replies = {}
+    all_responses = get_tweet_replies(browser, username, tweet_id)
+    if len(all_responses) > 0:
+        reply_id, response_data = all_responses.iteritems().next()
         replies[reply_id] = {'author': response_data['author'], 'content': response_data['content'], 'replies':
-                             recursively_get_replies(browser, username, reply_id)}
+                             first_responder(browser, username, reply_id)}
+    return replies
+
+
+def recursively_get_replies(browser, username, tweet_id):
+    print('getting replies for %s' % tweet_id)
+    replies = {}
+    all_responses = get_tweet_replies(browser, username, tweet_id)
+
+    if len(all_responses) > 0:
+        for reply_id, response_data in all_responses.iteritems():
+            replies[reply_id] = {'author': response_data['author'], 'content': response_data['content'], 'replies':
+                                 recursively_get_replies(browser, username, reply_id)}
     return replies
 
 
@@ -314,9 +370,13 @@ def get_tweet_replies(browser, username, tweet_id):
     url = 'https://twitter.com/{0}/status/{1}'.format(username, tweet_id)
     browser.open(url)
     html = browser.response().read().decode('utf-8', 'ignore')
+    print 'retrieved html'
     raw = BeautifulSoup(html, "html.parser")
+    print 'parsed html'
     replies_div = raw.find('div', class_='replies-to')
+    print 'retrieved replies'
     replies = replies_div.find_all('div', class_='ThreadedConversation-tweet')
+    print('mechanize found %d replies' % len(replies))
 
     # If there are no replies, stop
     if not replies:

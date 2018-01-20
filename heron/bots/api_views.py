@@ -4,7 +4,9 @@ from bots.helpers.twitter_utils import (add_to_twitter_conversation,
                                         create_markov_post, get_info,
                                         get_or_create_conversation_json,
                                         get_top_twitter_bots,
-                                        get_tweet_replies, get_tweets_over_reply_threshold, scrape)
+                                        get_tweet_replies,
+                                        get_tweets_over_reply_threshold,
+                                        scrape)
 from django.http import JsonResponse
 
 
@@ -28,8 +30,8 @@ def get_replies_for_tweet(request, username, tweet_id):
     return JsonResponse(response_data)
 
 
-def get_tweets_over_threshold(request, username, threshold):
-    response_data = get_tweets_over_reply_threshold(username, threshold=int(threshold))
+def get_tweets_over_threshold(request, username, threshold, scrape_mode):
+    response_data = get_tweets_over_reply_threshold(username, scrape_mode, threshold=int(threshold))
     print response_data
     return JsonResponse(response_data)
 
