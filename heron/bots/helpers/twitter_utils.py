@@ -280,13 +280,24 @@ def generate_new_conversation_post_text(conversation):
     return index, next_speaker, reply
 
 
-def get_tweets_over_reply_threshold_and_analyze(username, scrape_mode='recurse', threshold=1):
+def get_tweets_over_reply_threshold_and_analyze_text_emotion(username, scrape_mode='recurse', threshold=1):
     tweets = get_tweets_over_reply_threshold(username, scrape_mode, threshold)
     for tweet_id, tweet_data in tweets.iteritems():
         text = tweet_data['content']
-        emotion_dict = watson_analyze_text(text)
+        emotion_dict = watson_analyze_text_emotion(text)
         emotion, probability = emotion_dict.iteritems().next()
-        tweet_data['emotion': emotion]
+        tweet_data.update({'emotion': emotion})
+        tweets[tweet_id] = tweet_data
+    return tweets
+
+
+def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scrape_mode='recurse', threshold=1):
+    tweets = get_tweets_over_reply_threshold(username, scrape_mode, threshold)
+    for tweet_id, tweet_data in tweets.iteritems():
+        text = tweet_data['content']
+        emotion_dict = watson_analyze_text_uderstanding(text)
+        emotion, probability = emotion_dict.iteritems().next()
+        tweet_data.update({'emotion': emotion})
         tweets[tweet_id] = tweet_data
     return tweets
 
@@ -331,7 +342,6 @@ def highest_reply_number(browser, username, tweet_id):
     all_responses = get_tweet_replies(browser, username, tweet_id)
     highest_reply_number = 0
     tweet_with_highest_reply_number = None
-    print 'looping on top level responses'
     if len(all_responses) > 0:
         for reply_id, response_data in all_responses.iteritems():
             reply_number = get_tweet_replies(browser, response_data['author'], reply_id)
@@ -347,7 +357,6 @@ def highest_reply_number(browser, username, tweet_id):
 
 
 def single_reply(browser, username, tweet_id):
-    print('getting replies for %s' % tweet_id)
     replies = {}
     all_responses = get_tweet_replies(browser, username, tweet_id)
     if len(all_responses) > 0:
@@ -358,7 +367,6 @@ def single_reply(browser, username, tweet_id):
 
 
 def first_responder(browser, username, tweet_id):
-    print('getting replies for %s' % tweet_id)
     replies = {}
     all_responses = get_tweet_replies(browser, username, tweet_id)
     if len(all_responses) > 0:
@@ -369,7 +377,6 @@ def first_responder(browser, username, tweet_id):
 
 
 def recursively_get_replies(browser, username, tweet_id):
-    print('getting replies for %s' % tweet_id)
     replies = {}
     all_responses = get_tweet_replies(browser, username, tweet_id)
 
@@ -384,13 +391,9 @@ def get_tweet_replies(browser, username, tweet_id):
     url = 'https://twitter.com/{0}/status/{1}'.format(username, tweet_id)
     browser.open(url)
     html = browser.response().read().decode('utf-8', 'ignore')
-    print 'retrieved html'
     raw = BeautifulSoup(html, "html.parser")
-    print 'parsed html'
     replies_div = raw.find('div', class_='replies-to')
-    print 'retrieved replies'
     replies = replies_div.find_all('div', class_='ThreadedConversation-tweet')
-    print('mechanize found %d replies' % len(replies))
 
     # If there are no replies, stop
     if not replies:
@@ -506,17 +509,40 @@ def get_bot_attributes(username):
     return classifier_metrics
 
 
-def watson_analyze_text(data):
-    text = "He Donnie, put that Big Mac down, here are more beautiful women out marching today! #WomensMarch2018pic.twitter.com/uelqNnVNVY"
+def watson_analyze_text_uderstanding(text):
+    username = settings.WATSON_UNDERSTANDING_USERNAME
+    password = settings.WATSON_UNDERSTANDING_PASSWORD
+    url = 'https://gateway.watsonplatform.net/natural-language-understanding/api/v1/analyze?version=2017-02-27'
 
-    username = 'b7712a18-059e-4569-bee3-0d28f10e1d54'
-    password = 'p64ahPWTv4Pr'
-    watsonUrl = 'https://gateway.watsonplatform.net/tone-analyzer/api/v3/tone?version=2017-09-21&text='
+    features = {
+        "entities": {
+            "emotion": True,
+            "sentiment": True,
+            "limit": 2
+        },
+        "keywords": {
+            "emotion": True,
+            "sentiment": True,
+            "limit": 2
+        }
+    }
+    data = {'parameters': {'text': text, 'features': features}}
+    headers = {"content-type": "text/plain"}
+    response = requests.post(url, auth=(username, password), headers=headers, data=json.dumps(data))
+
+    print response
+    print response.content
+
+
+def watson_analyze_text_emotion(data):
+    username = settings.WATSON_TONE_USERNAME
+    password = settings.WATSON_TONE_PASSWORD
+    url = 'https://gateway.watsonplatform.net/tone-analyzer/api/v3/tone?version=2017-09-21&text='
 
     headers = {"content-type": "text/plain"}
+    response = requests.post(url, auth=(username, password), headers=headers, data=data.encode('utf8'))
+    response_json = json.loads(response)
 
-    r = requests.post(watsonUrl, auth=(username, password), headers=headers,
-                      data=data)
-    tone_dict = json.loads(r.text)['document_tone']['tones']
+    tone_dict = response_json['document_tone']['tones']
     readable_dict = {x['tone_name']: x['score'] for x in tone_dict}
     return readable_dict

@@ -119,3 +119,8 @@ TWEEPY_CONSUMER_KEY = local_settings.tweepy_consumer_key
 TWEEPY_CONSUMER_SECRET = local_settings.tweepy_consumer_secret
 TWEEPY_ACCESS_TOKEN = local_settings.tweepy_access_token
 TWEEPY_ACCESS_TOKEN_SECRET = local_settings.tweepy_access_token_secret
+
+WATSON_TONE_USERNAME = local_settings.watson_tone_username
+WATSON_TONE_PASSWORD = local_settings.watson_tone_password
+WATSON_UNDERSTANDING_USERNAME = local_settings.watson_understanding_username
+WATSON_UNDERSTANDING_PASSWORD = local_settings.watson_understanding_password
