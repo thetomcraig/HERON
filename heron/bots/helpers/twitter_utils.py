@@ -1,17 +1,20 @@
 import HTMLParser
+import json
 from collections import defaultdict
 
 import mechanize
 import nltk
-from bots.helpers.TweepyScraper import TweepyScraper
-from bots.models.twitter import (TwitterBot, TwitterConversation,
-                                 TwitterConversationPost, TwitterPost)
+import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
 from nltk.corpus import wordnet as wn
 from nltk.corpus import webtext
 from nltk.probability import FreqDist
 from rake_nltk import Rake
+
+from bots.helpers.TweepyScraper import TweepyScraper
+from bots.models.twitter import (TwitterBot, TwitterConversation,
+                                 TwitterConversationPost, TwitterPost)
 
 from .utils import create_post_cache, replace_tokens
 
@@ -277,6 +280,17 @@ def generate_new_conversation_post_text(conversation):
     return index, next_speaker, reply
 
 
+def get_tweets_over_reply_threshold_and_analyze(username, scrape_mode='recurse', threshold=1):
+    tweets = get_tweets_over_reply_threshold(username, scrape_mode, threshold)
+    for tweet_id, tweet_data in tweets.iteritems():
+        text = tweet_data['content']
+        emotion_dict = watson_analyze_text(text)
+        emotion, probability = emotion_dict.iteritems().next()
+        tweet_data['emotion': emotion]
+        tweets[tweet_id] = tweet_data
+    return tweets
+
+
 def get_tweets_over_reply_threshold(username, scrape_mode='recurse', threshold=1):
     if scrape_mode == 'recurse':
         reply_function = recursively_get_replies
@@ -490,3 +504,19 @@ def get_bot_attributes(username):
     classifier_metrics['hash_percentage'] = hash_tweets / total_posts_len
     classifier_metrics['verbosity'] = total_word_number / 144 * total_posts_len
     return classifier_metrics
+
+
+def watson_analyze_text(data):
+    text = "He Donnie, put that Big Mac down, here are more beautiful women out marching today! #WomensMarch2018pic.twitter.com/uelqNnVNVY"
+
+    username = 'b7712a18-059e-4569-bee3-0d28f10e1d54'
+    password = 'p64ahPWTv4Pr'
+    watsonUrl = 'https://gateway.watsonplatform.net/tone-analyzer/api/v3/tone?version=2017-09-21&text='
+
+    headers = {"content-type": "text/plain"}
+
+    r = requests.post(watsonUrl, auth=(username, password), headers=headers,
+                      data=data)
+    tone_dict = json.loads(r.text)['document_tone']['tones']
+    readable_dict = {x['tone_name']: x['score'] for x in tone_dict}
+    return readable_dict
