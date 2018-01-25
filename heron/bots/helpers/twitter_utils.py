@@ -1,3 +1,6 @@
+from watson_developer_cloud import NaturalLanguageUnderstandingV1
+from watson_developer_cloud.natural_language_understanding_v1 \
+    import Features, EntitiesOptions, KeywordsOptions
 import HTMLParser
 import json
 from collections import defaultdict
@@ -296,6 +299,13 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
     for tweet_id, tweet_data in tweets.iteritems():
         text = tweet_data['content']
         emotion_dict = watson_analyze_text_uderstanding(text)
+        print type(emotion_dict)
+        print emotion_dict.keys()
+        for k in emotion_dict['keywords']:
+            print k
+        print '--'
+        for e in emotion_dict['entities']:
+            print e
         emotion, probability = emotion_dict.iteritems().next()
         tweet_data.update({'emotion': emotion})
         tweets[tweet_id] = tweet_data
@@ -510,29 +520,23 @@ def get_bot_attributes(username):
 
 
 def watson_analyze_text_uderstanding(text):
-    username = settings.WATSON_UNDERSTANDING_USERNAME
-    password = settings.WATSON_UNDERSTANDING_PASSWORD
-    url = 'https://gateway.watsonplatform.net/natural-language-understanding/api/v1/analyze?version=2017-02-27'
+    natural_language_understanding = NaturalLanguageUnderstandingV1(username=settings.WATSON_UNDERSTANDING_USERNAME,
+                                                                    password=settings.WATSON_UNDERSTANDING_PASSWORD,
+                                                                    version='2017-02-27')
 
-    features = {
-        "entities": {
-            "emotion": True,
-            "sentiment": True,
-            "limit": 2
-        },
-        "keywords": {
-            "emotion": True,
-            "sentiment": True,
-            "limit": 2
-        }
-    }
-    data = {'parameters': {'text': text, 'features': features}}
-    headers = {"content-type": "text/plain"}
-    response = requests.post(url, auth=(username, password), headers=headers, data=json.dumps(data))
+    response = natural_language_understanding.analyze(
+        text=text,
+        features=Features(
+            entities=EntitiesOptions(
+                emotion=True,
+                sentiment=True,
+                limit=2),
+            keywords=KeywordsOptions(
+                emotion=True,
+                sentiment=True,
+                limit=2)))
 
-    print response
-    print response.content
-
+    return response
 
 def watson_analyze_text_emotion(data):
     username = settings.WATSON_TONE_USERNAME
