@@ -12,7 +12,6 @@ from bots.helpers.twitter_bot_utils import (add_to_twitter_conversation,
                                         scrape)
 from bots.helpers.twitter_getters import (get_tweet_replies,
                                           get_tweets_over_reply_threshold,
-                                          get_tweets_over_reply_threshold_and_analyze_text_emotion,
                                           get_tweets_over_reply_threshold_and_analyze_text_understanding)
 
 
@@ -39,13 +38,6 @@ def get_replies_for_tweet(request, username, tweet_id):
 def get_tweets_over_threshold(request, username, threshold, scrape_mode):
     response_data = get_tweets_over_reply_threshold(username, scrape_mode, threshold=int(threshold))
     return JsonResponse(response_data)
-
-
-def get_tweets_over_threshold_and_analyze_text_emotion(request, username, threshold, scrape_mode):
-    response_data = get_tweets_over_reply_threshold_and_analyze_text_emotion(
-        username, scrape_mode, threshold=int(threshold))
-    return JsonResponse(response_data)
-
 
 def get_tweets_over_threshold_and_analyze_text_understanding(request, username, threshold, scrape_mode):
     response_data = get_tweets_over_reply_threshold_and_analyze_text_understanding(

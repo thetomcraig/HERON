@@ -7,8 +7,6 @@ urlpatterns = [
     url(r'^get_replies_for_tweet/(?P<username>[a-zA-Z]+)/(?P<tweet_id>[0-9]+)/$', api_views.get_replies_for_tweet),
     url(r'^get_tweets_over_threshold/(?P<username>[a-zA-Z]+)/(?P<threshold>[0-9]+)/(?P<scrape_mode>[a-zA-Z_]+)/$',
         api_views.get_tweets_over_threshold),
-    url(r'^get_tweets_over_threshold_and_analyze_text_emotion/(?P<username>[a-zA-Z]+)/(?P<threshold>[0-9]+)/(?P<scrape_mode>[a-zA-Z_]+)/$',
-        api_views.get_tweets_over_threshold_and_analyze_text_emotion),
     url(r'^get_tweets_over_threshold_and_analyze_text_understanding/(?P<username>[a-zA-Z]+)/(?P<threshold>[0-9]+)/(?P<scrape_mode>[a-zA-Z_]+)/$',
         api_views.get_tweets_over_threshold_and_analyze_text_understanding),
     url(r'^get_bot_info/([0-9]+)/$', api_views.get_bot_info),
