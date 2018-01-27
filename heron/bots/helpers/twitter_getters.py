@@ -100,61 +100,27 @@ def single_reply(username, tweet_id):
                         }
             }
     """
-
     replies = {}
     all_responses = get_tweet_replies(username, tweet_id)
 
     if len(all_responses) == 0:
         return replies
 
+    # Just take the first response
     reply_id = all_responses.keys()[0]
     response_data = all_responses[reply_id]
 
     replies[reply_id] = {'author': response_data['author'], 'content': response_data['content'], 'replies': {}}
 
+    keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(response_data['content'])
+    replies[reply_id].update({'keyword_data': keywords_list})
+    replies[reply_id].update({'entities_data': entities_list})
+
     return replies
 
 
-def get_tweets_over_reply_threshold(username, scrape_mode, threshold, max_tweet_number=5):
-    """
-    Input:
-        twitter username
-        scrape mode (how many and what type of replies to return)
-        reply threshold (retrieve tweets with more replies than this number)
-    Output:
-        tweets and their replies, organized as per the scrape mode
-    """
-    # Decide what function we want to scrape with
-    if scrape_mode == 'all':
-        reply_function = get_all_replies
-    elif scrape_mode == 'single_reply':
-        reply_function = single_reply
-    else:
-        reply_function = None
-
-    print('method: %s' % str(reply_function))
-
-    bot = TwitterBot.objects.get(username=username)
-
-    tweets_over_threshold = {}
-    print "looping on the bot's tweets"
-    # Get viable top level tweets
-    # Get replies to that tweet
-    # Put the tweet and its replies into the dict if the reply number is over the threshold
-    # Call the recursive scrape function on each reply to get its replies
-    for tweet in bot.twitterpost_set.all()[:max_tweet_number]:
-        reply_data = get_tweet_replies(username, tweet.tweet_id)
-        num_replies = len(reply_data)
-        if num_replies >= threshold:
-            print('lots of replies; recursing')
-            tweets_over_threshold[tweet.tweet_id] = \
-                {'content': tweet.content, 'replies': reply_function(username, tweet.tweet_id)}
-            return tweets_over_threshold
-    # Recursive find replies to get the entire thread for each tweet
-    return tweets_over_threshold
-
-
-def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scrape_mode='all', threshold=1):
+def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scrape_mode='all', threshold=1,
+max_response_number=5):
     """
     Input:
         twitter username
@@ -164,12 +130,33 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
         tweets and their replies, scraped according to the scrape method
         each reply will have NLP analytics attached from the watson API
     """
-    tweets = get_tweets_over_reply_threshold(username, scrape_mode, threshold)
-    for tweet_id, tweet_data in tweets.iteritems():
-        text = tweet_data['content']
-        keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(text)
+    # Decide what function we want to scrape with
+    if scrape_mode == 'all':
+        reply_function = get_all_replies
+    elif scrape_mode == 'single_reply':
+        reply_function = single_reply
+    else:
+        reply_function = None
 
-        tweet_data.update({'keyword_data': keywords_list})
-        tweet_data.update({'entities_data': entities_list})
-        tweets[tweet_id] = tweet_data
-    return tweets
+    bot = TwitterBot.objects.get(username=username)
+
+    tweets_over_threshold = {}
+    # Get viable top level tweets
+    # Get replies to that tweet
+    # Put the tweet and its replies into the dict if the reply number is over the threshold
+    # Call the recursive scrape function on each reply to get its replies
+    for tweet in bot.twitterpost_set.all():
+        reply_data = get_tweet_replies(username, tweet.tweet_id)
+        num_replies = len(reply_data)
+        if num_replies >= threshold:
+            print('lots of replies; analyzing')
+            keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(tweet.content)
+            tweets_over_threshold[tweet.tweet_id] = {'keyword_data': keywords_list, 'entities_data':
+                                                     entities_list, 'content': tweet.content}
+            print('recursing')
+            tweets_over_threshold[tweet.tweet_id].update({'replies': reply_function(username, tweet.tweet_id)})
+
+            if len(tweets_over_threshold.keys()) >= max_response_number:
+                return tweets_over_threshold
+    # Recursive find replies to get the entire thread for each tweet
+    return tweets_over_threshold
