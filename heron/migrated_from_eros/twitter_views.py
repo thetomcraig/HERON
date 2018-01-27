@@ -9,7 +9,7 @@ from integrations.helpers.utils import (
     clear_set,
 )
 
-from integrations.helpers.twitter_utils import (
+from integrations.helpers.twitter_bot_utils import (
     clear_twitter_conversation,
     clear_all_twitter_conversations,
     scrape_twitter_person,

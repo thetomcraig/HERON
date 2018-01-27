@@ -1,16 +1,19 @@
+"""
+Endpoints that are publicly available, mostly for debugging
+"""
 from django.http import JsonResponse
 
-from bots.helpers.twitter_utils import (add_to_twitter_conversation,
+from bots.helpers.twitter_bot_utils import (add_to_twitter_conversation,
                                         clear_all_twitter_conversations,
                                         clear_twitter_conversation,
                                         create_markov_post, get_info,
                                         get_or_create_conversation_json,
                                         get_top_twitter_bots,
-                                        get_tweet_replies,
-                                        get_tweets_over_reply_threshold,
-                                        get_tweets_over_reply_threshold_and_analyze_text_emotion,
-                                        get_tweets_over_reply_threshold_and_analyze_text_understanding,
                                         scrape)
+from bots.helpers.twitter_getters import (get_tweet_replies,
+                                          get_tweets_over_reply_threshold,
+                                          get_tweets_over_reply_threshold_and_analyze_text_emotion,
+                                          get_tweets_over_reply_threshold_and_analyze_text_understanding)
 
 
 def list_all_bots(limit=None):
@@ -39,12 +42,14 @@ def get_tweets_over_threshold(request, username, threshold, scrape_mode):
 
 
 def get_tweets_over_threshold_and_analyze_text_emotion(request, username, threshold, scrape_mode):
-    response_data = get_tweets_over_reply_threshold_and_analyze_text_emotion(username, scrape_mode, threshold=int(threshold))
+    response_data = get_tweets_over_reply_threshold_and_analyze_text_emotion(
+        username, scrape_mode, threshold=int(threshold))
     return JsonResponse(response_data)
 
 
 def get_tweets_over_threshold_and_analyze_text_understanding(request, username, threshold, scrape_mode):
-    response_data = get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scrape_mode, threshold=int(threshold))
+    response_data = get_tweets_over_reply_threshold_and_analyze_text_understanding(
+        username, scrape_mode, threshold=int(threshold))
     return JsonResponse(response_data)
 
 

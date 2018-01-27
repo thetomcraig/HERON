@@ -1,13 +1,14 @@
-# streamer class for realtime feedback of a tweets using a given topic
-
-import json
-
+"""
+Utilities for getting data directly from twitter
+Uses Tweepy for getting tweets and trends
+Uses mechanize+BeautifulSoup to get reply chains and top users
+"""
 import mechanize
 import tweepy
 from bs4 import BeautifulSoup
 
 
-class TweepyScraper:
+class TwitterApiInterface:
 
     def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret):
         '''Setup, using credentials from Twitter'''
@@ -75,28 +76,3 @@ class TweepyScraper:
         for i in range(len(results)):
             results[i] = (results[i]).text.encode('ascii', 'ignore')
         return results
-
-    def stream(self, tag):
-        """
-        Setting up the streamer
-        """
-        l = StdOutListener()
-        # There are different kinds of streams: public stream, user stream, multi-user streams
-        # In this example follow tag
-        # For more details refer to https://dev.twitter.com/docs/streaming-apis
-        stream = tweepy.Stream(self.auth, l)
-        stream.filter(track=[tag])
-
-
-# This is the listener, resposible for receiving data
-class StdOutListener(tweepy.StreamListener):
-    def on_data(self, data):
-                # Twitter returns data in JSON format - we need to decode it first
-        decoded = json.loads(data)
-        # Also, we convert UTF-8 to ASCII ignoring all bad characters sent by users
-        print '@%s: %s' % (decoded['user']['screen_name'], decoded['text'].encode('ascii', 'ignore'))
-        print ''
-        return True
-
-    def on_error(self, status):
-        print status
