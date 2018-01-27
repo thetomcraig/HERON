@@ -1,6 +1,3 @@
-from watson_developer_cloud import NaturalLanguageUnderstandingV1
-from watson_developer_cloud.natural_language_understanding_v1 \
-    import Features, EntitiesOptions, KeywordsOptions
 import HTMLParser
 import json
 from collections import defaultdict
@@ -8,16 +5,19 @@ from collections import defaultdict
 import mechanize
 import nltk
 import requests
+from bots.helpers.TweepyScraper import TweepyScraper
+from bots.models.twitter import (TwitterBot, TwitterConversation,
+                                 TwitterConversationPost, TwitterPost)
 from bs4 import BeautifulSoup
 from django.conf import settings
 from nltk.corpus import wordnet as wn
 from nltk.corpus import webtext
 from nltk.probability import FreqDist
 from rake_nltk import Rake
-
-from bots.helpers.TweepyScraper import TweepyScraper
-from bots.models.twitter import (TwitterBot, TwitterConversation,
-                                 TwitterConversationPost, TwitterPost)
+from watson_developer_cloud import NaturalLanguageUnderstandingV1
+from watson_developer_cloud.natural_language_understanding_v1 import (EntitiesOptions,
+                                                                      Features,
+                                                                      KeywordsOptions)
 
 from .utils import create_post_cache, replace_tokens
 
@@ -298,18 +298,48 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
     tweets = get_tweets_over_reply_threshold(username, scrape_mode, threshold)
     for tweet_id, tweet_data in tweets.iteritems():
         text = tweet_data['content']
-        emotion_dict = watson_analyze_text_uderstanding(text)
-        print type(emotion_dict)
-        print emotion_dict.keys()
-        for k in emotion_dict['keywords']:
-            print k
-        print '--'
-        for e in emotion_dict['entities']:
-            print e
-        emotion, probability = emotion_dict.iteritems().next()
-        tweet_data.update({'emotion': emotion})
+        keywords_list, entities_list = interpret_watson_keywords_and_entities(text)
+
+        print keywords_list
+        print entities_list
+
+        #tweet_data.update({'emotion': emotion})
         tweets[tweet_id] = tweet_data
     return tweets
+
+
+def interpret_watson_keywords_and_entities(text):
+    emotion_dict = watson_analyze_text_uderstanding(text)
+    keywords_list = []
+    entities_list = []
+
+    keywords = emotion_dict['keywords']
+    for k in keywords:
+        text, emotion, relevance = interpret_watson_data(k)
+        keywords_list.append((text, emotion, relevance))
+    entities = emotion_dict['entities']
+    for e in entities:
+        text, emotion, relevance = interpret_watson_data(k)
+        entities_list.append((text, emotion, relevance))
+
+    return keywords_list, entities_list
+
+
+def interpret_watson_data(data_dict):
+    main_emotion = ''
+    highest_emotion_number = 0
+    text = data_dict['text']
+    emotion_dict = data_dict['emotion']
+    print 'data_dict'
+    print data_dict
+
+
+    for emotion in ['anger', u'joy', u'sadness', u'fear', u'disgust']:
+        if emotion_dict[emotion] > highest_emotion_number:
+            main_emotion = emotion
+            highest_emotion_number = emotion_dict[emotion]
+
+    return text, main_emotion, highest_emotion_number
 
 
 def get_tweets_over_reply_threshold(username, scrape_mode='recurse', threshold=1):
@@ -537,6 +567,7 @@ def watson_analyze_text_uderstanding(text):
                 limit=2)))
 
     return response
+
 
 def watson_analyze_text_emotion(data):
     username = settings.WATSON_TONE_USERNAME
