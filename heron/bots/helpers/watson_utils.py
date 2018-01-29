@@ -19,11 +19,11 @@ def interpret_watson_keywords_and_entities(text):
 
     keywords = emotion_dict.get('keywords', [])
     for k in keywords:
-        text, emotion, relevance = interpret_watson_data(k)
+        text, emotion, relevance, sentiment = interpret_watson_data(k)
         keywords_list.append((text, emotion, relevance))
     entities = emotion_dict.get('entities', [])
     for e in entities:
-        text, emotion, relevance = interpret_watson_data(k)
+        text, emotion, relevance, sentiment = interpret_watson_data(k)
         entities_list.append((text, emotion, relevance))
 
     return keywords_list, entities_list
@@ -33,14 +33,16 @@ def interpret_watson_data(data_dict):
     main_emotion = ''
     highest_emotion_number = 0
     text = data_dict['text']
-    emotion_dict = data_dict['emotion']
+    emotion_dict = data_dict.get('emotion', {})
 
     for emotion in ['anger', u'joy', u'sadness', u'fear', u'disgust']:
-        if emotion_dict[emotion] > highest_emotion_number:
+        if emotion_dict.get(emotion, 0) > highest_emotion_number:
             main_emotion = emotion
             highest_emotion_number = emotion_dict[emotion]
 
-    return text, main_emotion, highest_emotion_number
+    main_sentiment = data_dict.get('sentiment').get('label')
+
+    return text, main_emotion, highest_emotion_number, main_sentiment
 
 
 def watson_analyze_text_understanding(text):
