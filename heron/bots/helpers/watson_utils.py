@@ -13,6 +13,22 @@ from watson_developer_cloud.natural_language_understanding_v1 import (EntitiesOp
 
 
 def interpret_watson_keywords_and_entities(text):
+    """
+    Input:
+        text to be analyzed
+    Output:
+        keyword list of the form:
+            [('word or phrase', 'associated emotion', 'sentiment'),
+             ('word or phrase', 'associated emotion', 'sentiment'),
+             ...
+            ]
+        entity list of the form
+            [('word or phrase', 'associated emotion', 'sentiment'),
+             ('word or phrase', 'associated emotion', 'sentiment'),
+             ...
+            ]
+        where the sentiment is either 'positive' or 'negative'
+    """
     emotion_dict = watson_analyze_text_understanding(text)
     keywords_list = []
     entities_list = []
@@ -20,16 +36,25 @@ def interpret_watson_keywords_and_entities(text):
     keywords = emotion_dict.get('keywords', [])
     for k in keywords:
         text, emotion, relevance, sentiment = interpret_watson_data(k)
-        keywords_list.append((text, emotion, relevance))
+        keywords_list.append((text, emotion, relevance, sentiment))
     entities = emotion_dict.get('entities', [])
     for e in entities:
         text, emotion, relevance, sentiment = interpret_watson_data(k)
-        entities_list.append((text, emotion, relevance))
+        entities_list.append((text, emotion, relevance, sentiment))
 
     return keywords_list, entities_list
 
 
 def interpret_watson_data(data_dict):
+    """
+    Input:
+        dict of info returned from the watson API call
+    Output:
+        the original text
+        the emotion most strongly associated
+        the probability number for that emotion
+        the main sentiment found for the text (either 'positive' or 'negative')
+    """
     main_emotion = ''
     highest_emotion_number = 0
     text = data_dict['text']
@@ -46,6 +71,14 @@ def interpret_watson_data(data_dict):
 
 
 def watson_analyze_text_understanding(text):
+    """
+    Input:
+        text to be analyzed
+    Output:
+        response from the watson API
+
+    Taken from the watson API docs.
+    """
     natural_language_understanding = NaturalLanguageUnderstandingV1(username=settings.WATSON_UNDERSTANDING_USERNAME,
                                                                     password=settings.WATSON_UNDERSTANDING_PASSWORD,
                                                                     version='2017-02-27')
@@ -71,6 +104,12 @@ def watson_analyze_text_understanding(text):
 
 
 def watson_analyze_text_emotion(data):
+    """
+    Input:
+        text to be analyzed
+    Output:
+        response from the watson API
+    """
     username = settings.WATSON_TONE_USERNAME
     password = settings.WATSON_TONE_PASSWORD
     url = 'https://gateway.watsonplatform.net/tone-analyzer/api/v3/tone?version=2017-09-21&text='
