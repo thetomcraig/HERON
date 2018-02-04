@@ -165,3 +165,14 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
                 return tweets_over_threshold
     # Recursive find replies to get the entire thread for each tweet
     return tweets_over_threshold
+
+
+def catalog_tweet_replies(username, threshold=1, max_response_number=5):
+    """
+    Given a user, grab their tweets
+    Assign the replies to the corresponding linked bots
+    """
+    get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scrape_mode='all', threshold=threshold1,
+                                                                   max_response_number=max_response_number)
+    # FILL THIS OUT
+    # Get all th linked bots
