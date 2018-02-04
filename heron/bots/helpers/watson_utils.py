@@ -29,20 +29,26 @@ def interpret_watson_keywords_and_entities(text):
             ]
         where the sentiment is either 'positive' or 'negative'
     """
+    # All the information back from the API
     emotion_dict = watson_analyze_text_understanding(text)
-    keywords_list = []
-    entities_list = []
+    # Final lists that will hold the text objects and their metadata
+    keywords_dict = {}
+    entities_dict = {}
+    # Most prevalent emotion from the entire API response
+    overarching_emotion = ''
 
     keywords = emotion_dict.get('keywords', [])
     for k in keywords:
         text, emotion, relevance, sentiment = interpret_watson_data(k)
-        keywords_list.append((text, emotion, relevance, sentiment))
+        keywords_dict[text] = {'emotion': emotion, 'relevance': relevance, 'sentiment': sentiment}
     entities = emotion_dict.get('entities', [])
     for e in entities:
-        text, emotion, relevance, sentiment = interpret_watson_data(k)
-        entities_list.append((text, emotion, relevance, sentiment))
+        text, emotion, relevance, sentiment = interpret_watson_data(e)
+        entities_dict[text] = {'emotion': emotion, 'relevance': relevance, 'sentiment': sentiment}
 
-    return keywords_list, entities_list
+    overarching_emotion = get_overarching_emotion(keywords_dict, entities_dict)
+
+    return overarching_emotion, keywords_dict, entities_dict
 
 
 def interpret_watson_data(data_dict):
@@ -56,18 +62,57 @@ def interpret_watson_data(data_dict):
         the main sentiment found for the text (either 'positive' or 'negative')
     """
     main_emotion = ''
-    highest_emotion_number = 0
+    highest_emotion_relevance = 0
     text = data_dict['text']
     emotion_dict = data_dict.get('emotion', {})
 
-    for emotion in ['anger', u'joy', u'sadness', u'fear', u'disgust']:
-        if emotion_dict.get(emotion, 0) > highest_emotion_number:
+    for emotion in settings.WATSON_EMOTIONS:
+        if emotion_dict.get(emotion, 0) > highest_emotion_relevance:
             main_emotion = emotion
-            highest_emotion_number = emotion_dict[emotion]
+            highest_emotion_relevance = emotion_dict[emotion]
 
     main_sentiment = data_dict.get('sentiment').get('label')
 
-    return text, main_emotion, highest_emotion_number, main_sentiment
+    return text, main_emotion, highest_emotion_relevance, main_sentiment
+
+
+def get_overarching_emotion(keywords_dict, entities_dict):
+    """
+    Input:
+        Dictionaries with all the keywords and entities with their metadata
+        keywords_dict:
+        entities_dict:
+            { text: {'emotion': emotion,
+                     'relevance': relevance,
+                     'sentiment': sentiment}
+            }
+
+    Output:
+        The most prominent emotion in all the data given
+    """
+    overarching_emotion = ''
+
+    empty_entries = {'positive': 0, 'negative': 0, 'neutral': 0}
+    emotion_matrix = {}
+    for emotion in settings.WATSON_EMOTIONS:
+        emotion_matrix[emotion] = 0
+
+    for key, data in keywords_dict.iteritems():
+        # We add 1 to account for entries with a 0 value;
+        # This way they're still accounted for
+        emotion = data['emotion']
+        if emotion == '':
+            empty_entries[data['sentiment']] = empty_entries[data['sentiment']] + data['relevance'] + 1
+        else:
+            emotion_matrix[emotion] = emotion_matrix[emotion] + data['relevance'] + 1
+
+    # Return the emotoin with the highes calculated sum
+    max_emotion_count = 0
+    for emotion, total in emotion_matrix.iteritems():
+        if total > max_emotion_count:
+            overarching_emotion = emotion
+
+    return overarching_emotion
 
 
 def watson_analyze_text_understanding(text):

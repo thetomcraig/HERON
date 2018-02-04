@@ -124,3 +124,5 @@ WATSON_TONE_USERNAME = local_settings.watson_tone_username
 WATSON_TONE_PASSWORD = local_settings.watson_tone_password
 WATSON_UNDERSTANDING_USERNAME = local_settings.watson_understanding_username
 WATSON_UNDERSTANDING_PASSWORD = local_settings.watson_understanding_password
+
+WATSON_EMOTIONS = ['anger', 'joy', 'sadness', 'fear', 'disgust']

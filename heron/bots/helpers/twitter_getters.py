@@ -112,9 +112,11 @@ def single_reply(username, tweet_id):
 
     replies[reply_id] = {'author': response_data['author'], 'content': response_data['content'], 'replies': {}}
 
-    keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(response_data['content'])
+    overarching_emotion, keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(response_data[
+                                                                                                            'content'])
     replies[reply_id].update({'keyword_data': keywords_list})
     replies[reply_id].update({'entities_data': entities_list})
+    replies[reply_id].update({'overarching_emotion': overarching_emotion})
 
     return replies
 
@@ -150,9 +152,12 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
         num_replies = len(reply_data)
         if num_replies >= threshold:
             print('lots of replies; analyzing')
-            keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(tweet.content)
-            tweets_over_threshold[tweet.tweet_id] = {'keyword_data': keywords_list, 'entities_data':
-                                                     entities_list, 'content': tweet.content}
+            overarching_emotion, keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(
+                tweet.content)
+            tweets_over_threshold[tweet.tweet_id] = {'keyword_data': keywords_list,
+                                                     'entities_data': entities_list,
+                                                     'content': tweet.content,
+                                                     'overarching_emotion': overarching_emotion}
             print('recursing')
             tweets_over_threshold[tweet.tweet_id].update({'replies': reply_function(username, tweet.tweet_id)})
 
