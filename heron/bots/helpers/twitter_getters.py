@@ -167,12 +167,42 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
     return tweets_over_threshold
 
 
-def catalog_tweet_replies(username, threshold=1, max_response_number=5):
+def catalog_tweet_replies(username, scrape_mode='all', threshold=1, max_response_number=5):
     """
     Given a user, grab their tweets
     Assign the replies to the corresponding linked bots
+
+    The response from the getter function looks like:
+    tweets_dictionary = {
+        tweet_id : {'keyword_data': keywords_list,
+                    'entities_data': entities_list,
+                    'content': tweet.content,
+                    'overarching_emotion': overarching_emotion,
+                    'replies': <Dictionary that matches this one>
+                   }
+    }
+
+    Grab all of the twitter bots that correspond to the emotions the watson API returns
+    Loop over the tweet replies and assign them to their corresponding bots
     """
-    get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scrape_mode='all', threshold=threshold1,
-                                                                   max_response_number=max_response_number)
     # FILL THIS OUT
-    # Get all th linked bots
+    anger_bot = TwitterBot.objects.get()
+    joy_bot = TwitterBot.objects.get()
+    sad_bot = TwitterBot.objects.get()
+    fear_bot = TwitterBot.objects.get()
+    disgust_bot = TwitterBot.objects.get()
+
+    emotion_map = {'anger': anger_bot,
+                   'joy': joy_bot,
+                   'sadness': sad_bot,
+                   'fear': fear_bot,
+                   'disgust': disgust_bot}
+    replies = get_tweets_over_reply_threshold_and_analyze_text_understanding(username,
+                                                                             scrape_mode=scrape_mode,
+                                                                             threshold=threshold,
+                                                                             max_response_number=max_response_number)
+
+    for reply_id, reply_data in replies.iteritems():
+
+        # FILL THIS OUT
+        # Get all th linked bots
