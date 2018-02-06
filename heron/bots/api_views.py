@@ -9,9 +9,15 @@ from bots.helpers.twitter_bot_utils import (add_to_twitter_conversation,
                                             create_markov_post, get_info,
                                             get_or_create_conversation_json,
                                             get_top_twitter_bots,
-                                            scrape)
+                                            scrape,
+                                            get_emotion_bots)
 from bots.helpers.twitter_getters import (get_tweet_replies,
                                           get_tweets_over_reply_threshold_and_analyze_text_understanding)
+
+
+def list_all_emotion_bots():
+    top = get_emotion_bots()
+    return JsonResponse(top)
 
 
 def list_all_bots(limit=None):

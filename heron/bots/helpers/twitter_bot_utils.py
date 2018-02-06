@@ -39,6 +39,10 @@ def get_top_twitter_bots(limit=50):
     return bot_data
 
 
+def get_emotion_bots():
+    pass
+
+
 def update_top_twitter_bots():
     names_and_unames = get_top_twitter_users()
 

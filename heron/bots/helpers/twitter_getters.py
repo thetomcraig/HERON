@@ -4,7 +4,7 @@ Functions can control the way in which reply chains are parsed,
 and return tweets and replys that march specific critera
 """
 import mechanize
-from bots.models.twitter import TwitterBot
+from bots.models.twitter import TwitterBot, TwitterPost
 from bs4 import BeautifulSoup
 import watson_utils
 
@@ -174,7 +174,8 @@ def catalog_tweet_replies(username, scrape_mode='all', threshold=1, max_response
 
     The response from the getter function looks like:
     tweets_dictionary = {
-        tweet_id : {'keyword_data': keywords_list,
+        tweet_id : {'author': author,
+                    'keyword_data': keywords_list,
                     'entities_data': entities_list,
                     'content': tweet.content,
                     'overarching_emotion': overarching_emotion,
@@ -183,26 +184,15 @@ def catalog_tweet_replies(username, scrape_mode='all', threshold=1, max_response
     }
 
     Grab all of the twitter bots that correspond to the emotions the watson API returns
-    Loop over the tweet replies and assign them to their corresponding bots
     """
-    # FILL THIS OUT
-    anger_bot = TwitterBot.objects.get()
-    joy_bot = TwitterBot.objects.get()
-    sad_bot = TwitterBot.objects.get()
-    fear_bot = TwitterBot.objects.get()
-    disgust_bot = TwitterBot.objects.get()
-
-    emotion_map = {'anger': anger_bot,
-                   'joy': joy_bot,
-                   'sadness': sad_bot,
-                   'fear': fear_bot,
-                   'disgust': disgust_bot}
     replies = get_tweets_over_reply_threshold_and_analyze_text_understanding(username,
                                                                              scrape_mode=scrape_mode,
                                                                              threshold=threshold,
                                                                              max_response_number=max_response_number)
 
     for reply_id, reply_data in replies.iteritems():
+        overarching_emotion = reply_data['overarching_emotion']
+        reply_author = reply_data['author']
+        TwitterPost.objects.create(author=reply_author, content=reply_data['content'], emotion=overarching_emotion)
 
-        # FILL THIS OUT
-        # Get all th linked bots
+    # With this done; logic to group together the tweets with the same emotions and do markov chains

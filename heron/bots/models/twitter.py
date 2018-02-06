@@ -5,7 +5,6 @@ import base
 
 
 class TwitterBot(base.Bot):
-    happiness = models.IntegerField(default=0)
 
     def __str__(self):
         return self.username
@@ -13,6 +12,7 @@ class TwitterBot(base.Bot):
 
 class TwitterPost(base.Sentence):
     author = models.ForeignKey(TwitterBot, default=None, null=True)
+    emotion = models.CharField(max_length=1000, default=None, null=True)
     tweet_id = models.IntegerField()
 
 
