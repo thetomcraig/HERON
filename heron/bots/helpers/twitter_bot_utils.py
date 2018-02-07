@@ -40,7 +40,17 @@ def get_top_twitter_bots(limit=50):
 
 
 def get_emotion_bots():
-    pass
+    bot_meta_data = {}
+    for emotion in settings.WATSON_EMOTIONS:
+        tweets = TwitterPost.objects.filter(emotion=emotion)
+        bot_meta_data[emotion] = []
+        for tweet in tweets:
+            bot_meta_data[emotion].append(
+                {'id': tweet.id,
+                 'emotion': emotion,
+                 'content': tweet.content})
+
+    return bot_meta_data
 
 
 def update_top_twitter_bots():

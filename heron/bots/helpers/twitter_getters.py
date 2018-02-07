@@ -167,7 +167,7 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
     return tweets_over_threshold
 
 
-def catalog_tweet_replies(username, scrape_mode='all', threshold=1, max_response_number=5):
+def catalog_tweet_replies(tweets_over_threshold):
     """
     Given a user, grab their tweets
     Assign the replies to the corresponding linked bots
@@ -185,14 +185,14 @@ def catalog_tweet_replies(username, scrape_mode='all', threshold=1, max_response
 
     Grab all of the twitter bots that correspond to the emotions the watson API returns
     """
-    replies = get_tweets_over_reply_threshold_and_analyze_text_understanding(username,
-                                                                             scrape_mode=scrape_mode,
-                                                                             threshold=threshold,
-                                                                             max_response_number=max_response_number)
-
-    for reply_id, reply_data in replies.iteritems():
-        overarching_emotion = reply_data['overarching_emotion']
-        reply_author = reply_data['author']
-        TwitterPost.objects.create(author=reply_author, content=reply_data['content'], emotion=overarching_emotion)
+    for tweetid, tweet_data in tweets_over_threshold.iteritems():
+        for reply_id, reply_data in tweet_data['replies'].iteritems():
+            overarching_emotion = reply_data['overarching_emotion']
+            reply_username = reply_data['author']
+            reply_author = TwitterBot.objects.get_or_create(username=reply_username)[0]
+            TwitterPost.objects.create(tweet_id=reply_id,
+                                       author=reply_author,
+                                       content=reply_data['content'],
+                                       emotion=overarching_emotion)
 
     # With this done; logic to group together the tweets with the same emotions and do markov chains

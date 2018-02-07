@@ -12,10 +12,11 @@ from bots.helpers.twitter_bot_utils import (add_to_twitter_conversation,
                                             scrape,
                                             get_emotion_bots)
 from bots.helpers.twitter_getters import (get_tweet_replies,
-                                          get_tweets_over_reply_threshold_and_analyze_text_understanding)
+                                          get_tweets_over_reply_threshold_and_analyze_text_understanding,
+                                          catalog_tweet_replies)
 
 
-def list_all_emotion_bots():
+def list_all_emotion_bots(request):
     top = get_emotion_bots()
     return JsonResponse(top)
 
@@ -43,6 +44,9 @@ def get_replies_for_tweet(request, username, tweet_id):
 def get_tweets_over_threshold_and_analyze_text_understanding(request, username, threshold, response_number, scrape_mode):
     response_data = get_tweets_over_reply_threshold_and_analyze_text_understanding(
         username, scrape_mode, threshold=int(threshold), max_response_number=int(response_number))
+
+    catalog_tweet_replies(response_data)
+
     return JsonResponse(response_data)
 
 
