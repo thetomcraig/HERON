@@ -48,6 +48,8 @@ def get_tweet_replies(username, tweet_id):
         tweet_id = tweet['data-tweet-id']
         all_responses[tweet_id] = {'author': screen_name, 'content': text.text}
 
+    # Need to remove duplicates here, same tweets show up with the same id...
+    # WAIT, this seems to actually be legitimate... should it be deduped
     return all_responses
 
 
@@ -102,6 +104,8 @@ def single_reply(username, tweet_id):
     """
     replies = {}
     all_responses = get_tweet_replies(username, tweet_id)
+    print 'all responses'
+    print all_responses
 
     if len(all_responses) == 0:
         return replies
