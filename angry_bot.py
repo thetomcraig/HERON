@@ -2,31 +2,50 @@ import discord
 import asyncio
 import collections
 
-client = discord.Client()
+angry_bot = discord.Client()
+# Can instantiate more bots here
 timeout = 1
 all_messages = collections.deque([])
 all_message_ids = []
 
 
-
 def get_response(message):
-r = requests.get('https://api.github.com/user', auth=('user', 'pass'))
+    """
+    Send the message to the backend
+    The backend will generate a response and save it to the database, then return it
+    """
+    r = requests.get('API_ENDPOINT')
     all_messages.extend(message)
 
 
-@client.event
+def send_response(channel, bot, response):
+    """
+    Send the response to the discord channel
+    """
+   await bot.send_message(channel, response)
+
+
+@angry_bot.event
 async def on_ready():
     print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
+    print(angry_bot.user.name)
+    print(angry_bot.user.id)
     print('------')
 
 
-@client.event
+@angry_bot.event
 async def on_message(message):
-    while True:
-        await asyncio.sleep(timeout)
-        response = get_response(message)
-        await client.send_message(message.channel, response)
+    """
+    This function will loop, it sends a message,
+    then gets called again when that message gets sent
+    """
+    # Do some corner case checking.. is this the first message?
+    # Maybe look at all the previous messsages?
+    response = get_response(message)
+    # Sleep for a random amount of time, then send the message
+    await asyncio.sleep(timeout)
+    send_tesponse(message.channel, bot, response)
 
-client.run('NDEyMzA2MDg1Mjk1MjkyNDE4.DWIYvg.ZmgLGCkonDoc1Nu6q-WqkcxnROw')
+
+
+angry_bot.run('NDEyMzA2MDg1Mjk1MjkyNDE4.DWIYvg.ZmgLGCkonDoc1Nu6q-WqkcxnROw')

@@ -73,3 +73,7 @@ def clear_conversation(request, bot1_id, bot2_id):
 def clear_all_conversations(request, bot_id):
     clear_all_twitter_conversations(bot_id)
     return JsonResponse({'success': 'true'})
+
+
+def get_response_to_tweet(request):
+    pass

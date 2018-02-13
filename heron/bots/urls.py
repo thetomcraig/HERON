@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'^update_conversation/(?P<bot1_id>[0-9]+)/(?P<bot2_id>[0-9]+)/$', api_views.update_conversation),
     url(r'^clear_conversation/(?P<bot1_id>[0-9]+)/(?P<bot2_id>[0-9+])/$', api_views.clear_conversation),
     url(r'^clear_all_conversations/(?P<bot_id>[0-9]+)/$', api_views.clear_all_conversations),
+    url(r'^get_response_to_tweet/$', api_views.get_response_to_tweet),
 ]
