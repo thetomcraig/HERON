@@ -14,6 +14,7 @@ from bots.helpers.twitter_bot_utils import (add_to_twitter_conversation,
 from bots.helpers.twitter_getters import (get_tweet_replies,
                                           get_tweets_over_reply_threshold_and_analyze_text_understanding,
                                           catalog_tweet_replies)
+from django.views.decorators.csrf import csrf_exempt
 
 
 def list_all_emotion_bots(request):
@@ -60,8 +61,14 @@ def get_conversation(request, bot1_id, bot2_id):
     return JsonResponse(conversation_json)
 
 
-def update_conversation(request, bot1_id, bot2_id):
-    new_post_json = add_to_twitter_conversation(bot1_id, bot2_id)
+@csrf_exempt
+def update_conversation(request):
+    """
+    """
+    author = request.body.get('author')
+    partner = request.body.get('partner')
+    new_post_json = add_to_twitter_conversation(author, partner)
+    # response_data = get_response_to_message(message, author, partner)
     return JsonResponse(new_post_json)
 
 
@@ -73,7 +80,3 @@ def clear_conversation(request, bot1_id, bot2_id):
 def clear_all_conversations(request, bot_id):
     clear_all_twitter_conversations(bot_id)
     return JsonResponse({'success': 'true'})
-
-
-def get_response_to_tweet(request):
-    pass

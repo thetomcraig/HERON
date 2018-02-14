@@ -7,6 +7,7 @@ from collections import defaultdict
 
 import nltk
 from bots.helpers.twitter_api_interface import TwitterApiInterface
+from bots.helpers.watson_utils import interpret_watson_keywords_and_entities
 from bots.models.twitter import (TwitterBot, TwitterConversation,
                                  TwitterConversationPost, TwitterPost)
 from django.conf import settings
@@ -226,10 +227,11 @@ def get_or_create_conversation_json(bot1_id, bot2_id):
 
 def get_next_speaker_and_last_speaker(conversation_posts, author, partner):
     """
-    Figure out the order of speech
-    Start by guessing, that the author spoke last
-    If there are more than 0 posts and in it was actually the parter who spoke last,
-    swith our assignments
+    Input:
+        All the current posts in a 2 speaker conversation
+        The two speakers
+    Output:
+        Based on the given list of posts, return who speaks next and who spoke last
     """
     last_speaker = author
     next_speaker = partner
@@ -313,10 +315,44 @@ def get_web_text_response(conversation_posts):
     return 'STUB'
 
 
-def generate_new_conversation_post_text(conversation):
+def generate_new_conversation_post_text(speaker_id, is_new_conversation, previous_posts):
     """
-    Query set of the conversation posts in the current conversation, sorted chronologically
+    Input:
+        Id of the bot who is going to speak
+        Boolean - is this conversation brand new
+        Sorted list of plain text posts from the speaker
+    Output:
+        A new post for the next speaker
+
+    If this is a new conversation, then there are no posts, so return a pseudo random post
+    If there are previous posts, then analyze the last one with the watson API
+    Use that data, and all the previous posts to construct a new one for the speaker
     """
+    if is_new_conversation:
+        reply = create_markov_post(speaker_id)
+        return reply
+
+    overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(previous_posts[-1])
+    # Use the emotion of the last speaker to figure out what to say, maybe means adding a new user??
+    # Use the keywords/entities with markov calc
+    reply = ''
+    return reply
+
+
+def add_to_twitter_conversation(bot_username, partner_username):
+    """
+    Input:
+        Username of first speaker
+        Username of second speaker
+    Output:
+        JSON corresponding to a new post in the conversation between these two
+
+    First we sort the conversation query dict
+    Then we determind if it is branc new, and who speaks next
+    Then we generate the text for the new post and create a django object for it
+    Then we return JSON corresponding to that new object
+    """
+    conversation = get_or_create_conversation(bot_username, partner_username)
     sorted_conversation_posts = conversation.twitterconversationpost_set.order_by('index').all()
 
     last_post = sorted_conversation_posts.last()
@@ -330,27 +366,17 @@ def generate_new_conversation_post_text(conversation):
                                                                    conversation.author,
                                                                    conversation.partner)
 
-    if new_conversation:
-        key_phrases = []
-    else:
-        key_phrases = get_key_phrases(sorted_conversation_posts)
-    # reply = generate_response_with_key_phrases(key_phrases, next_speaker, last_speaker)
-    reply = get_web_text_response(sorted_conversation_posts)
+    previous_tweets = [x.post.content for x in sorted_conversation_posts]
+    # This does the logic of creating the content
+    reply = generate_new_conversation_post_text(next_speaker.id, new_conversation, previous_tweets)
 
-    return index, next_speaker, reply
-
-
-def add_to_twitter_conversation(bot_username, partner_username):
-    conversation = get_or_create_conversation(bot_username, partner_username)
-
-    new_index, new_author, new_content = generate_new_conversation_post_text(conversation)
-    new_post = new_author.twitterpost_set.create(content=new_content)
+    new_post = next_speaker.twitterpost_set.create(content=reply)
 
     new_convo_post = TwitterConversationPost.objects.create(
         post=new_post,
         conversation=conversation,
-        author=new_author,
-        index=new_index
+        author=next_speaker,
+        index=index
     )
     new_post_json = {'author': new_convo_post.author.username,
                      'index': new_convo_post.index,

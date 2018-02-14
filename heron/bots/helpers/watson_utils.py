@@ -17,16 +17,21 @@ def interpret_watson_keywords_and_entities(text):
     Input:
         text to be analyzed
     Output:
-        keyword list of the form:
-            [('word or phrase', 'associated emotion', 'sentiment'),
-             ('word or phrase', 'associated emotion', 'sentiment'),
+        Emotion for the entire text message
+        keyword dict of the form:
+            {'word or phrase':
+                {'emotion': associated emotion, 'relevance': revelance number, 'sentiment': associated sentimanet),
+            {'word or phrase':
+                {'emotion': associated emotion, 'relevance': revelance number, 'sentiment': associated sentimanet),
              ...
-            ]
-        entity list of the form
-            [('word or phrase', 'associated emotion', 'sentiment'),
-             ('word or phrase', 'associated emotion', 'sentiment'),
+            }
+        entity dict of the form
+            {'word or phrase':
+                {'emotion': associated emotion, 'relevance': revelance number, 'sentiment': associated sentimanet),
+            {'word or phrase':
+                {'emotion': associated emotion, 'relevance': revelance number, 'sentiment': associated sentimanet),
              ...
-            ]
+            }
         where the sentiment is either 'positive' or 'negative'
     """
     # All the information back from the API
