@@ -15,11 +15,19 @@ class Bot(models.Model):
 
     def apply_markov_chains_inner(self, beginning_caches, all_caches):
         """
-        Takes a series of caches, with two consecutive words mapped to at third
+        Input:
+            All of the beginning caches for a bot
+            All of the caches for a user
+        Output:
+            New text message made with markov chains using the input
+            Float of how random the chain is
+
+        Caches are triplets of consecutive words from the source
+        Beginning=True means the triplet was the bginning of a messaeg
+
         Starts with a random choice from the beginning caches
         makes random choices from the all_caches set, constructing a markov chain
-        'randomness' value determined by totalling the number of words that were chosen
-        randomly
+        'randomness' value determined by totalling the number of words that were chosen randomly
         """
         new_markov_chain = []
         randomness = -0.0
@@ -66,7 +74,7 @@ class Bot(models.Model):
         print "made: "
         print new_markov_chain, randomness
 
-        return (new_markov_chain, randomness)
+        return (' '.join(new_markov_chain), randomness)
 
 
 class Sentence(models.Model):

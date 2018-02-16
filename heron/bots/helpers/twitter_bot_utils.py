@@ -320,7 +320,7 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
     Input:
         Id of the bot who is going to speak
         Boolean - is this conversation brand new
-        Sorted list of plain text posts from the speaker
+        Sorted list of plain text posts of the entire conversation
     Output:
         A new post for the next speaker
 
@@ -328,9 +328,19 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
     If there are previous posts, then analyze the last one with the watson API
     Use that data, and all the previous posts to construct a new one for the speaker
     """
+    reply = ''
+
+    bot = TwitterBot.objects.get(id=speaker_id)
+    all_beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
+    all_caches = bot.twitterpostcache_set.all()
+    new_markov_post, randomness = bot.apply_markov_chains_inner(all_beginning_caches, all_caches)
+# We've made a markov post, but still need to account for the historuical data
+# Also make sure this new data is cached in the source
+
     if is_new_conversation:
-        reply = create_markov_post(speaker_id)
+        # Choose a random post from the user
         return reply
+
 
     overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(previous_posts[-1])
     # Use the emotion of the last speaker to figure out what to say, maybe means adding a new user??
