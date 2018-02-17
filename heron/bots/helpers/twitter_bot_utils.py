@@ -118,7 +118,7 @@ def scrape_twitter_bot(bot):
 
         post = TwitterPost.objects.create(author=bot, content=tweet, tweet_id=tweet_id)
 
-        create_post_cache(post, bot.twitterpostcache_set)
+        create_post_cache(post.content, bot.twitterpostcache_set)
 
     return response_data
 
@@ -192,9 +192,9 @@ def find_word_frequency_for_user(username):
             words[word] += 1
 
 
-def get_or_create_conversation(bot1_id, bot2_id):
-    bot = TwitterBot.objects.get(id=bot1_id)
-    partner = TwitterBot.objects.get(id=bot2_id)
+def get_or_create_conversation(bot1_username, bot2_username):
+    bot, _ = TwitterBot.objects.get_or_create(username=bot1_username)
+    partner, _ = TwitterBot.objects.get_or_create(username=bot2_username)
 
     conversation = None
     try:
@@ -209,8 +209,8 @@ def get_or_create_conversation(bot1_id, bot2_id):
     return conversation
 
 
-def get_or_create_conversation_json(bot1_id, bot2_id):
-    conversation = get_or_create_conversation(bot1_id, bot2_id)
+def get_or_create_conversation_json(bot1_username, bot2_username):
+    conversation = get_or_create_conversation(bot1_username, bot2_username)
     conversation_json = {'id': conversation.id,
                          'bot1': conversation.author.username,
                          'bot2': conversation.partner.username,
@@ -245,9 +245,9 @@ def get_next_speaker_and_last_speaker(conversation_posts, author, partner):
     return next_speaker, last_speaker
 
 
-def clear_twitter_conversation(bot1_id, bot2_id, conversation=None):
+def clear_twitter_conversation(bot1_username, bot2_username, conversation=None):
     if not conversation:
-        conversation = get_or_create_conversation(bot1_id, bot2_id)
+        conversation = get_or_create_conversation(bot1_username, bot2_username)
 
     for convo_post in conversation.twitterconversationpost_set.all():
         convo_post.post.delete()
@@ -335,12 +335,14 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
     all_caches = bot.twitterpostcache_set.all()
     new_markov_post, randomness = bot.apply_markov_chains_inner(all_beginning_caches, all_caches)
 # We've made a markov post, but still need to account for the historuical data
-# Also make sure this new data is cached in the source
+
+    print 'new_markov_post'
+    print new_markov_post
+    create_post_cache(new_markov_post, bot.twitterpostcache_set)
 
     if is_new_conversation:
         # Choose a random post from the user
         return reply
-
 
     overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(previous_posts[-1])
     # Use the emotion of the last speaker to figure out what to say, maybe means adding a new user??
@@ -380,7 +382,7 @@ def add_to_twitter_conversation(bot_username, partner_username):
     # This does the logic of creating the content
     reply = generate_new_conversation_post_text(next_speaker.id, new_conversation, previous_tweets)
 
-    new_post = next_speaker.twitterpost_set.create(content=reply)
+    new_post = next_speaker.twitterpost_set.create(tweet_id=-1, content=reply)
 
     new_convo_post = TwitterConversationPost.objects.create(
         post=new_post,

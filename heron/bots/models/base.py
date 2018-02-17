@@ -34,7 +34,7 @@ class Bot(models.Model):
 
         if not beginning_caches:
             print "Not enough data, skipping"
-            return (new_markov_chain, randomness)
+            return ('', randomness)
 
         seed_index = 0
         if len(beginning_caches) != 0:

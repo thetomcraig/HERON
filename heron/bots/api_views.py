@@ -1,6 +1,7 @@
 """
 Endpoints that are publicly available, mostly for debugging
 """
+import json
 from django.http import JsonResponse
 
 from bots.helpers.twitter_bot_utils import (add_to_twitter_conversation,
@@ -56,8 +57,8 @@ def create_post(request, bot_id):
     return JsonResponse({'new post': new_markov_post})
 
 
-def get_conversation(request, bot1_id, bot2_id):
-    conversation_json = get_or_create_conversation_json(bot1_id, bot2_id)
+def get_conversation(request, bot1_username, bot2_username):
+    conversation_json = get_or_create_conversation_json(bot1_username, bot2_username)
     return JsonResponse(conversation_json)
 
 
@@ -65,15 +66,18 @@ def get_conversation(request, bot1_id, bot2_id):
 def update_conversation(request):
     """
     """
-    author = request.body.get('author')
-    partner = request.body.get('partner')
+    print (request.body)
+    print type(request.body)
+    body = json.loads(request.body)
+    author = body.get('author')
+    partner = body.get('partner')
     new_post_json = add_to_twitter_conversation(author, partner)
     # response_data = get_response_to_message(message, author, partner)
     return JsonResponse(new_post_json)
 
 
-def clear_conversation(request, bot1_id, bot2_id):
-    clear_twitter_conversation(bot1_id, bot2_id)
+def clear_conversation(request, bot1_username, bot2_username):
+    clear_twitter_conversation(bot1_username, bot2_username)
     return JsonResponse({'success': 'true'})
 
 

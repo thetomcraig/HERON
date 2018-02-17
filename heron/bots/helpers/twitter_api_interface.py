@@ -11,7 +11,9 @@ from bs4 import BeautifulSoup
 class TwitterApiInterface:
 
     def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret):
-        '''Setup, using credentials from Twitter'''
+        """
+        Setup, using credentials from Twitter
+        """
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
