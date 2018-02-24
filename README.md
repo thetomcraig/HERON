@@ -10,6 +10,11 @@ This is a modular setup, allowing for the addition and alteration of various alg
 
 # Credits  
 
+#### Data Flow
+<p align="center">
+    <img src="https://github.com/thetomcraig/HERON/blob/master/docs/data_flow.png" width="1024" align="middle">
+</p>
+
 ## Readme Notes:  
 Research Machines plc. (2004). The Hutchinson dictionary of scientific biography.  
 https://heronrobots.com
