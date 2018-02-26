@@ -11,16 +11,14 @@ from bots.helpers.twitter_bot_utils import (add_to_twitter_conversation,
                                             get_or_create_conversation_json,
                                             get_top_twitter_bots,
                                             scrape,
-                                            get_emotion_bots)
+                                            add_new_tweets_to_emotion_bot,
+                                            clear_twitter_bot,
+                                            list_all_emotion_twitter_bots)
 from bots.helpers.twitter_getters import (get_tweet_replies,
                                           get_tweets_over_reply_threshold_and_analyze_text_understanding,
                                           catalog_tweet_replies)
 from django.views.decorators.csrf import csrf_exempt
 
-
-def list_all_emotion_bots(request):
-    top = get_emotion_bots()
-    return JsonResponse(top)
 
 
 def list_all_bots(limit=None):
@@ -28,8 +26,8 @@ def list_all_bots(limit=None):
     return JsonResponse(top)
 
 
-def get_bot_info(request, bot_id):
-    info = get_info(bot_id)
+def get_bot_info(request, username):
+    info = get_info(username)
     return JsonResponse(info)
 
 
@@ -37,6 +35,15 @@ def scrape_bot(request, username):
     response_data = scrape(username)
     return JsonResponse(response_data)
 
+def clear_bot_tweets(request, username):
+    clear_twitter_bot(username)
+    return JsonResponse({'success': 'true'})
+
+def list_all_emotion_bots(limit=None):
+    print 'here'
+    bots = list_all_emotion_twitter_bots()
+    print bots
+    return JsonResponse(bots)
 
 def get_replies_for_tweet(request, username, tweet_id):
     response_data = get_tweet_replies(username, tweet_id)
@@ -65,15 +72,32 @@ def get_conversation(request, bot1_username, bot2_username):
 @csrf_exempt
 def update_conversation(request):
     """
+    Given two conversation partners, make a new post for whomever is next
     """
-    print (request.body)
-    print type(request.body)
     body = json.loads(request.body)
     author = body.get('author')
     partner = body.get('partner')
     new_post_json = add_to_twitter_conversation(author, partner)
-    # response_data = get_response_to_message(message, author, partner)
     return JsonResponse(new_post_json)
+
+
+@csrf_exempt
+def update_emotion_bot(request):
+    """
+    Input:
+        request with:
+            bot to attach replies to
+            emotion that we will filter agains
+            source list of twitter users who's replies we will analyze
+
+    Get the replies and analysis for all the source twitter users sepcified
+    Get all the replies that match the given emotion and attach them to the given bot
+
+
+    """
+    body = json.loads(request.body)
+    new_tweets = add_new_tweets_to_emotion_bot(body)
+    return JsonResponse({'new_tweets': new_tweets})
 
 
 def clear_conversation(request, bot1_username, bot2_username):

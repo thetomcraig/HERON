@@ -144,7 +144,7 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
     else:
         reply_function = None
 
-    bot = TwitterBot.objects.get(username=username)
+    bot, _ = TwitterBot.objects.get_or_create(username=username)
 
     tweets_over_threshold = {}
     # Get viable top level tweets

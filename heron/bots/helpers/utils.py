@@ -10,6 +10,7 @@ def create_post_cache(words, cache_set):
     Create the postcache item from the new post
     to be used to make the markov post
     """
+    print 'utils.py'
     print words
     word_list = words.split()
     for index in range(len(word_list) - 2):

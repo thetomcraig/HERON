@@ -2,6 +2,7 @@
 Very general utilities for working with twitter bots, post, conversations
 CRUD functions happen here
 """
+import random
 import HTMLParser
 from collections import defaultdict
 
@@ -17,6 +18,8 @@ from nltk.probability import FreqDist
 from rake_nltk import Rake
 
 from .utils import create_post_cache, replace_tokens
+
+from bots.helpers.twitter_getters import get_tweets_over_reply_threshold_and_analyze_text_understanding
 
 
 def get_top_twitter_users(limit=50):
@@ -40,7 +43,17 @@ def get_top_twitter_bots(limit=50):
     return bot_data
 
 
-def get_emotion_bots():
+def list_all_emotion_twitter_bots():
+    bot_data = {}
+    for emotion in settings.WATSON_EMOTIONS:
+        bot_name = emotion + '_bot'
+        bot, _ = TwitterBot.objects.get_or_create(username=bot_name)
+        tweets = TwitterPost.objects.filter(author=bot)
+        bot_data[bot_name] = {'tweets': [x.content for x in tweets]}
+    return bot_data
+
+
+def get_emotion_tweets():
     bot_meta_data = {}
     for emotion in settings.WATSON_EMOTIONS:
         tweets = TwitterPost.objects.filter(emotion=emotion)
@@ -131,9 +144,13 @@ def scrape(username):
             scrape_response['tweets']}
     return data
 
+def clear_twitter_bot(username):
+    bot = TwitterBot.objects.get(username=username)
+    bot.twitterpost_set.all().delete()
 
-def get_info(bot_id):
-    bot = TwitterBot.objects.get(id=bot_id)
+
+def get_info(username):
+    bot = TwitterBot.objects.get(username=username)
     real_posts = {x.id: x.content for x in bot.twitterpost_set.all()}
     fake_posts = {x.id: x.content for x in bot.twitterpostmarkov_set.all()}
     bot_data = {
@@ -328,26 +345,42 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
     If there are previous posts, then analyze the last one with the watson API
     Use that data, and all the previous posts to construct a new one for the speaker
     """
-    reply = ''
-
     bot = TwitterBot.objects.get(id=speaker_id)
-    all_beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
-    all_caches = bot.twitterpostcache_set.all()
-    new_markov_post, randomness = bot.apply_markov_chains_inner(all_beginning_caches, all_caches)
-# We've made a markov post, but still need to account for the historuical data
-
-    print 'new_markov_post'
-    print new_markov_post
-    create_post_cache(new_markov_post, bot.twitterpostcache_set)
-
     if is_new_conversation:
         # Choose a random post from the user
-        return reply
+        post_set = bot.twitterpost_set.all()
+        if post_set.count():
+            random_tweet = random.choice(bot.twitterpost_set.all())
+            reply = random_tweet.content
+            # Make sure it's not a reply??
+            return reply
+        else:
+            return None
 
-    overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(previous_posts[-1])
-    # Use the emotion of the last speaker to figure out what to say, maybe means adding a new user??
-    # Use the keywords/entities with markov calc
     reply = ''
+    all_beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
+    all_caches = bot.twitterpostcache_set.all()
+    # The template represents how this user talks,
+    # We will alter this text based on the previous conversation posts
+    new_markov_template, randomness = bot.apply_markov_chains_inner(all_beginning_caches, all_caches)
+    _, markov_keywords, markov_entities = interpret_watson_keywords_and_entities(new_markov_template)
+
+    # Use the emotion of the last speaker to figure out what to say, maybe means adding a new user??
+    overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(previous_posts[-1])
+
+    print "markov info"
+    print new_markov_template
+    print markov_keywords
+    print markov_entities
+    print "previous post info"
+    print overarching_emotion
+    print keywords
+    print entities
+
+
+
+    reply = ''
+    create_post_cache(reply, bot.twitterpostcache_set)
     return reply
 
 
@@ -381,6 +414,8 @@ def add_to_twitter_conversation(bot_username, partner_username):
     previous_tweets = [x.post.content for x in sorted_conversation_posts]
     # This does the logic of creating the content
     reply = generate_new_conversation_post_text(next_speaker.id, new_conversation, previous_tweets)
+    if not reply:
+        reply = generate_new_conversation_post_text(last_speaker.id, new_conversation, previous_tweets)
 
     new_post = next_speaker.twitterpost_set.create(tweet_id=-1, content=reply)
 
@@ -395,6 +430,36 @@ def add_to_twitter_conversation(bot_username, partner_username):
                      'conversation': new_convo_post.conversation.id,
                      'content': new_convo_post.post.content}
     return new_post_json
+
+
+def add_new_tweets_to_emotion_bot(params):
+
+    twitter_source_users = params.get('twitter_source_users')
+    response_number = params.get('response_number')
+
+    new_bot_tweets = {}
+    for emotion in settings.WATSON_EMOTIONS:
+        new_bot_tweets[emotion] = []
+    threshold = 1
+    scrape_mode = 'single_reply'
+
+    for username in twitter_source_users:
+        print 'getting responses for source user: %s' % username
+        response_data = get_tweets_over_reply_threshold_and_analyze_text_understanding(
+            username, scrape_mode, threshold=int(threshold), max_response_number=int(response_number))
+        for tweet_id, tweet_data in response_data.iteritems():
+            replies = tweet_data['replies']
+            if replies:
+                for reply_id, reply_content in replies.iteritems():
+                    emotion = reply_content['overarching_emotion']
+                    if emotion in settings.WATSON_EMOTIONS:
+                        content = reply_content['content']
+                        bot, _ = TwitterBot.objects.get_or_create(username=emotion + '_bot')
+                        bot.twitterpost_set.create(tweet_id=reply_id, content=content)
+                        create_post_cache(content, bot.twitterpostcache_set)
+                        new_bot_tweets[emotion].append(reply_content['content'])
+
+    return new_bot_tweets
 
 
 def create_markov_post(bot_id):
