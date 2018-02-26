@@ -372,14 +372,30 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
     print new_markov_template
     print markov_keywords
     print markov_entities
+
     print "previous post info"
     print overarching_emotion
     print keywords
     print entities
 
+    #Look at the keywords in the previous post and see if they can be injected into the new markov post
+    replacements = {}
+    for keyword, data in keywords.iteritems():
+        emotion = data.get('emotion')
+        for markov_keyword, markov_data in markov_keywords.iteritems():
+            markov_emotion = markov_data.get('emotion')
+            if emotion == markov_emotion:
+                replacements[markov_keyword] = keyword
+
+    for entity, data in entities.iteritems():
+        pass
+
+    print replacements
 
 
-    reply = ''
+
+
+    reply = new_markov_template
     create_post_cache(reply, bot.twitterpostcache_set)
     return reply
 
