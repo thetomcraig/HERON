@@ -144,6 +144,7 @@ def scrape(username):
             scrape_response['tweets']}
     return data
 
+
 def clear_twitter_bot(username):
     bot = TwitterBot.objects.get(username=username)
     bot.twitterpost_set.all().delete()
@@ -368,17 +369,7 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
     # Use the emotion of the last speaker to figure out what to say, maybe means adding a new user??
     overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(previous_posts[-1])
 
-    print "markov info"
-    print new_markov_template
-    print markov_keywords
-    print markov_entities
-
-    print "previous post info"
-    print overarching_emotion
-    print keywords
-    print entities
-
-    #Look at the keywords in the previous post and see if they can be injected into the new markov post
+    # Look at the keywords in the previous post and see if they can be injected into the new markov post
     replacements = {}
     for keyword, data in keywords.iteritems():
         emotion = data.get('emotion')
@@ -388,12 +379,15 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
                 replacements[markov_keyword] = keyword
 
     for entity, data in entities.iteritems():
-        pass
+        emotion = data.get('emotion')
+        for markov_keyword, markov_data in markov_keywords.iteritems():
+            markov_emotion = markov_data.get('emotion')
+            if emotion == markov_emotion:
+                if markov_keyword not in replacements.keys():
+                    replacements[markov_keyword] = entity
 
-    print replacements
-
-
-
+    for phrase, replacement in replacements.iteritems():
+        new_markov_template = new_markov_template.replace(phrase, replacement)
 
     reply = new_markov_template
     create_post_cache(reply, bot.twitterpostcache_set)
