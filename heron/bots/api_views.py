@@ -20,7 +20,6 @@ from bots.helpers.twitter_getters import (get_tweet_replies,
 from django.views.decorators.csrf import csrf_exempt
 
 
-
 def list_all_bots(limit=None):
     top = get_top_twitter_bots()
     return JsonResponse(top)
@@ -35,15 +34,16 @@ def scrape_bot(request, username):
     response_data = scrape(username)
     return JsonResponse(response_data)
 
+
 def clear_bot_tweets(request, username):
     clear_twitter_bot(username)
     return JsonResponse({'success': 'true'})
 
+
 def list_all_emotion_bots(limit=None):
-    print 'here'
     bots = list_all_emotion_twitter_bots()
-    print bots
     return JsonResponse(bots)
+
 
 def get_replies_for_tweet(request, username, tweet_id):
     response_data = get_tweet_replies(username, tweet_id)

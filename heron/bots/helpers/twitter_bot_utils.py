@@ -114,6 +114,8 @@ def scrape_twitter_bot(bot):
 
     for idx, tweet_data in enumerate(tweets):
         tweet = tweet_data[0]
+        print 'tweet'
+        print tweet
         tweet_id = tweet_data[1]
         words = tweet.split()
         for word in words:
@@ -139,7 +141,6 @@ def scrape_twitter_bot(bot):
 def scrape(username):
     bot = TwitterBot.objects.get(username=username)
     scrape_response = scrape_twitter_bot(bot)
-    print scrape_response
     data = {'success': True, 'new tweets': scrape_response['new tweets'], 'tweets':
             scrape_response['tweets']}
     return data

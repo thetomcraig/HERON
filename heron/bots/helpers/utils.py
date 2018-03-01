@@ -1,4 +1,5 @@
 import random
+import logging
 
 
 def clear_set(set_to_clear):
@@ -10,19 +11,17 @@ def create_post_cache(words, cache_set):
     Create the postcache item from the new post
     to be used to make the markov post
     """
-    print 'utils.py'
-    print words
     word_list = words.split()
     for index in range(len(word_list) - 2):
         word1 = word_list[index]
         word2 = word_list[index + 1]
         final_word = word_list[index + 2]
 
-        print "caching:"
-        print word1
-        print word2
-        print "|"
-        print "`--> " + final_word
+        logging.debug("caching:")
+        logging.debug(word1)
+        logging.debug(word2)
+        logging.debug("|")
+        logging.debug("`--> " + final_word)
 
         beginning = False
         if (index == 0):
