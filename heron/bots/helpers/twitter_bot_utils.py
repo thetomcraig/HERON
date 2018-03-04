@@ -112,11 +112,9 @@ def scrape_twitter_bot(bot):
     response_data['new tweets'] = len(tweets)
     response_data['tweets'] = {}
 
-    for idx, tweet_data in enumerate(tweets):
-        tweet = tweet_data[0]
-        print 'tweet'
-        print tweet
-        tweet_id = tweet_data[1]
+    idx = 0
+    for tweet_id, tweet in tweets.iteritems():
+
         words = tweet.split()
         for word in words:
             if "@" in word:
@@ -126,7 +124,7 @@ def scrape_twitter_bot(bot):
             if "#" in word:
                 bot.twitterhashtag_set.create(content=word)
 
-        response_data['tweets'][idx] = str(tweet_data)
+        response_data['tweets'][idx] = str(tweet)
 
         h = HTMLParser.HTMLParser()
         tweet = h.unescape(tweet.decode('utf-8'))
@@ -134,6 +132,7 @@ def scrape_twitter_bot(bot):
         post = TwitterPost.objects.create(author=bot, content=tweet, tweet_id=tweet_id)
 
         create_post_cache(post.content, bot.twitterpostcache_set)
+        idx += 1
 
     return response_data
 
