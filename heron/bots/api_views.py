@@ -77,7 +77,8 @@ def update_conversation(request):
     body = json.loads(request.body)
     author = body.get('author')
     partner = body.get('partner')
-    new_post_json = add_to_twitter_conversation(author, partner)
+    post_number = body.get('post_number', 1)
+    new_post_json = add_to_twitter_conversation(author, partner, post_number=post_number)
     return JsonResponse(new_post_json)
 
 

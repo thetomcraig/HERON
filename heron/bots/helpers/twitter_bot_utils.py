@@ -395,16 +395,17 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
     return reply
 
 
-def add_to_twitter_conversation(bot_username, partner_username):
+def add_to_twitter_conversation(bot_username, partner_username, post_number=1):
     """
     Input:
         Username of first speaker
         Username of second speaker
+        The Number of posts to make
     Output:
         JSON corresponding to a new post in the conversation between these two
 
     First we sort the conversation query dict
-    Then we determind if it is branc new, and who speaks next
+    Then we determind if it is brand new, and who speaks next
     Then we generate the text for the new post and create a django object for it
     Then we return JSON corresponding to that new object
     """
@@ -422,25 +423,32 @@ def add_to_twitter_conversation(bot_username, partner_username):
                                                                    conversation.author,
                                                                    conversation.partner)
 
-    previous_tweets = [x.post.content for x in sorted_conversation_posts]
-    # This does the logic of creating the content
-    reply = generate_new_conversation_post_text(next_speaker.id, new_conversation, previous_tweets)
-    if not reply:
-        reply = generate_new_conversation_post_text(last_speaker.id, new_conversation, previous_tweets)
+    new_posts_json = {}
+    for i in range(post_number):
+        previous_tweets = [x.post.content for x in sorted_conversation_posts]
+        # This does the logic of creating the content
+        reply = generate_new_conversation_post_text(next_speaker.id, new_conversation, previous_tweets)
+        if not reply:
+            reply = generate_new_conversation_post_text(last_speaker.id, new_conversation, previous_tweets)
 
-    new_post = next_speaker.twitterpost_set.create(tweet_id=-1, content=reply)
+        new_post = next_speaker.twitterpost_set.create(tweet_id=-1, content=reply)
 
-    new_convo_post = TwitterConversationPost.objects.create(
-        post=new_post,
-        conversation=conversation,
-        author=next_speaker,
-        index=index
-    )
-    new_post_json = {'author': new_convo_post.author.username,
-                     'index': new_convo_post.index,
-                     'conversation': new_convo_post.conversation.id,
-                     'content': new_convo_post.post.content}
-    return new_post_json
+        new_convo_post = TwitterConversationPost.objects.create(
+            post=new_post,
+            conversation=conversation,
+            author=next_speaker,
+            index=index
+        )
+        new_post_json = {'author': new_convo_post.author.username,
+                         'index': new_convo_post.index,
+                         'conversation': new_convo_post.conversation.id,
+                         'content': new_convo_post.post.content}
+        new_posts_json[i] = new_post_json
+
+        # Switch the speakers
+        last_speaker, next_speaker = next_speaker, last_speaker
+        index += 1
+    return new_posts_json
 
 
 def add_new_tweets_to_emotion_bot(params):
