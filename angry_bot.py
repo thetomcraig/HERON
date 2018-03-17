@@ -1,12 +1,21 @@
 import discord
 import asyncio
 import collections
+import requests
 
-angry_bot = discord.Client()
+client = discord.Client()
 # Can instantiate more bots here
 timeout = 1
-all_messages = collections.deque([])
+all_messages = []
 all_message_ids = []
+
+
+@client.event
+async def on_ready():
+    print('Logged in as')
+    print(client.user.name)
+    print(client.user.id)
+    print('------')
 
 
 def get_response(message):
@@ -14,26 +23,14 @@ def get_response(message):
     Send the message to the backend
     The backend will generate a response and save it to the database, then return it
     """
-    r = requests.get('API_ENDPOINT')
-    all_messages.extend(message)
+    #r = requests.get('API_ENDPOINT')
+    all_messages.extend(message.content)
+    return 'test hi'
 
 
-def send_response(channel, bot, response):
-    """
-    Send the response to the discord channel
-    """
-   await bot.send_message(channel, response)
 
 
-@angry_bot.event
-async def on_ready():
-    print('Logged in as')
-    print(angry_bot.user.name)
-    print(angry_bot.user.id)
-    print('------')
-
-
-@angry_bot.event
+@client.event
 async def on_message(message):
     """
     This function will loop, it sends a message,
@@ -44,8 +41,8 @@ async def on_message(message):
     response = get_response(message)
     # Sleep for a random amount of time, then send the message
     await asyncio.sleep(timeout)
-    send_tesponse(message.channel, bot, response)
+    print('here')
+    await client.send_message(message.channel, response)
 
 
-
-angry_bot.run('NDEyMzA2MDg1Mjk1MjkyNDE4.DWIYvg.ZmgLGCkonDoc1Nu6q-WqkcxnROw')
+client.run('NDEyMzA2MDg1Mjk1MjkyNDE4.DWIYvg.ZmgLGCkonDoc1Nu6q-WqkcxnROw')
