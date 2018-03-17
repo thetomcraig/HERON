@@ -52,10 +52,13 @@ class TwitterApiInterface:
         return people_dict
 
     def get_tweets_from_user(self, username, limit):
-        outtweets = []
         alltweets = self.api.user_timeline(screen_name=username, count=limit)
-        outtweets = [(tweet.text.encode("utf-8"), tweet.id) for tweet in alltweets]
-        return outtweets
+        full_length_tweets = {}
+        for tweet in alltweets:
+            full_length_tweet = self.api.get_status(tweet.id, tweet_mode='extended')._json['full_text']
+            full_length_tweets[tweet.id] = full_length_tweet.encode("utf-8")
+
+        return full_length_tweets
 
     def findTrends(self):
         # This will be a one element dict
