@@ -1,6 +1,7 @@
 # HERON
 <p align="center">
-    <img src="https://github.com/thetomcraig/HERON/blob/master/docs/Hero_of_Alexandria.png" width="256" align="middle">
+    <img src="https://github.com/thetomcraig/HERON/blob/master/docs/Hero_of_Alexandria.png" width="128" align="middle">
+    <img src="https://github.com/thetomcraig/HERON/blob/master/docs/aeolipile_14514_lg.gif" width="256" align="middle">
 </p>
 
 ## What is this
