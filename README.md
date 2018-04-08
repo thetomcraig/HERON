@@ -15,8 +15,8 @@ They are also "pluggable"; it is easy to create a network of bots that communica
 ### Technical Details and Data Flow
 <p align="center">
     <img src="https://github.com/thetomcraig/HERON/blob/master/docs/data_flow.png" width="1024" align="middle">
+    <p>Figure 1.</p>
 </p>
-Figure 1.
 * Figure 1 shows the high level schema for data flow through the system.  
   * Sources   
     * The main source of messages and conversations is Twitter.  
@@ -34,7 +34,7 @@ Figure 1.
       * These new messages are also saved for the system, so they can be used as inputs for further calculations.  
       * Based on the emotional catagories given from the Watson calculations, bots are created for each.  
         * The messages that match the Bot's emotion are used to create its new messages  
-      * After the new mesages are craeted, the Dispatcher sends them to the server to be viewed.  
+      * After the new mesages are craeted, the Dispatcher sends them to the server to be viewed.   
       
 
 ### Sources/Credits
