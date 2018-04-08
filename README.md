@@ -1,6 +1,6 @@
 # HERON
 <p align="center">
-    <img src="https://github.com/jasonlong/vim-replacement-icon/blob/master/vim.png" width="256" align="middle">
+    <img src="https://github.com/thetomcraig/HERON/blob/master/docs/Hero_of_Alexandria.png" width="256" align="middle">
 </p>
 
 ## What is this
