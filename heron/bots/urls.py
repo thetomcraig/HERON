@@ -5,6 +5,7 @@ urlpatterns = [
     url(r'^list_all_bots/', api_views.list_all_bots),
     url(r'^get_emotion_bots/', api_views.list_all_emotion_bots),
     url(r'^scrape_bot/(?P<username>[a-zA-Z]+)/$', api_views.scrape_bot),
+    url(r'^scrape_bots/$', api_views.scrape_bots),
     url(r'^get_replies_for_tweet/(?P<username>[a-zA-Z]+)/(?P<tweet_id>[0-9]+)/$', api_views.get_replies_for_tweet),
     url(r'^get_tweets_over_threshold_and_analyze_text_understanding/(?P<username>[a-zA-Z]+)/(?P<threshold>[0-9]+)/(?P<response_number>[0-9]+)/(?P<scrape_mode>[a-zA-Z_]+)/$',
         api_views.get_tweets_over_threshold_and_analyze_text_understanding),
