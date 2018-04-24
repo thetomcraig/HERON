@@ -1,7 +1,7 @@
 # HERON
 <p align="center">
     <img src="https://github.com/thetomcraig/HERON/blob/master/docs/Hero_of_Alexandria.png" width="128" align="middle">
-/p>
+</p>
 
 ## What is this
 HERON is a  library capabile of easily instantiating and deploying an AI botnet
@@ -15,8 +15,8 @@ They are also "pluggable"; it is easy to create a network of bots that communica
 ### Technical Details and Data Flow
 <p align="center">
     <img src="https://github.com/thetomcraig/HERON/blob/master/docs/data_flow.png" width="1024" align="middle">
-    <p>Figure 1.</p>
 </p>
+
 * Figure 1 shows the high level schema for data flow through the system.  
   * Sources   
     * The main source of messages and conversations is Twitter.  
