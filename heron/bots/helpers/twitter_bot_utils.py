@@ -450,6 +450,16 @@ def add_to_twitter_conversation(bot_username, partner_username, post_number=1):
     return new_posts_json
 
 
+def add_to_group_conversation(bot_username, message, all_bots):
+    bots = [TwitterBot.get(username=x) for x in all_bots]
+    convo = get_group_convo(bots)
+    # Call analysis function
+
+def get_group_convo(bots):
+    # Need to make a new link so a conversation can have many members
+    pass
+
+
 def add_new_tweets_to_emotion_bot(params):
 
     twitter_source_users = params.get('twitter_source_users')
