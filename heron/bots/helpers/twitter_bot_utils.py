@@ -228,7 +228,7 @@ def get_or_create_conversation(bot1_username, bot2_username):
 
 
 def get_or_create_conversation_json(bot1_username, bot2_username):
-    conversation = get_or_create_conversation(bot1_username, bot2_username)
+    conversation = get_or_create_conversation(bot1_username, bot2_username)[0]
     conversation_json = {'id': conversation.id,
                          'bot1': conversation.author.username,
                          'bot2': conversation.partner.username,
@@ -244,12 +244,10 @@ def get_or_create_conversation_json(bot1_username, bot2_username):
 
 
 def get_group_conversation_json(conversation_name):
-    conversation = TwitterConversation.object.get_or_create(name=conversation_name)
+    conversation = TwitterConversation.objects.get_or_create(name=conversation_name)[0]
     conversation_json = {}
     for conv_post in conversation.twitterconversationpost_set.all():
-        conversation_json[conv_post.index] = {
-            {conv_post.author: conv_post.post.content}
-        }
+        conversation_json[conv_post.index] = {conv_post.post.author.username: conv_post.post.content}
 
     return {conversation_name: conversation_json}
 
@@ -462,8 +460,8 @@ def add_to_twitter_conversation(bot_username, partner_username, post_number=1):
 
 
 def add_message_to_group_convo(bot_username, message, conversation_name):
-    conversation = TwitterConversation.object.get_or_create(name=conversation_name)
-    bot = TwitterBot.objects.get_or_create(username=bot_username)
+    conversation = TwitterConversation.objects.get_or_create(name=conversation_name)[0]
+    bot = TwitterBot.objects.get_or_create(username=bot_username)[0]
 
     # Make sure this hasn't been added already
     sorted_conversation_posts = conversation.twitterconversationpost_set.order_by('index').all()
@@ -472,12 +470,13 @@ def add_message_to_group_convo(bot_username, message, conversation_name):
             return message
 
     # This has not been added to the convo yet, so proceed
-    post = TwitterPost.create(author=bot, content=message)
+    post = TwitterPost.objects.create(tweet_id=-1, author=bot, content=message)
 
     index = conversation.twitterconversationpost_set.count()
-    conversation_post = TwitterConversationPost.create(author=bot, post=post, conversation=conversation, index=index)
+    conversation_post = TwitterConversationPost.objects.create(
+        author=bot, post=post, conversation=conversation, index=index)
 
-    return conversation_post.content
+    return conversation_post.post.content
 
 
 def add_new_tweets_to_emotion_bot(params):

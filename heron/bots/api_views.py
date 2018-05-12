@@ -76,6 +76,7 @@ def get_conversation(request, bot1_username, bot2_username):
     return JsonResponse(conversation_json)
 
 
+@csrf_exempt
 def get_group_conversation(request):
     body = json.loads(request.body)
     conversation_name = body.get('conversation_name')
