@@ -49,8 +49,9 @@ class TwitterMention(models.Model):
 
 
 class TwitterConversation(models.Model):
-    author = models.ForeignKey(TwitterBot, related_name='author')
-    partner = models.ForeignKey(TwitterBot)
+    name = models.CharField(default='PLACEHOLDER', null=True)
+    author = models.ForeignKey(TwitterBot, related_name='author', default=None, null=True)
+    partner = models.ForeignKey(TwitterBot, default=None, null=True)
 
 
 class TwitterConversationPost(models.Model):

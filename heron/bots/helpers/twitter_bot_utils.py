@@ -243,6 +243,17 @@ def get_or_create_conversation_json(bot1_username, bot2_username):
     return conversation_json
 
 
+def get_group_conversation_json(conversation_name):
+    conversation = TwitterConversation.object.get_or_create(name=conversation_name)
+    conversation_json = {}
+    for conv_post in conversation.twitterconversationpost_set.all():
+        conversation_json[conv_post.index] = {
+            {conv_post.author: conv_post.post.content}
+        }
+
+    return {conversation_name: conversation_json}
+
+
 def get_next_speaker_and_last_speaker(conversation_posts, author, partner):
     """
     Input:
@@ -450,14 +461,23 @@ def add_to_twitter_conversation(bot_username, partner_username, post_number=1):
     return new_posts_json
 
 
-def add_to_group_conversation(bot_username, message, all_bots):
-    bots = [TwitterBot.get(username=x) for x in all_bots]
-    convo = get_group_convo(bots)
-    # Call analysis function
+def add_message_to_group_convo(bot_username, message, conversation_name):
+    conversation = TwitterConversation.object.get_or_create(name=conversation_name)
+    bot = TwitterBot.objects.get_or_create(username=bot_username)
 
-def get_group_convo(bots):
-    # Need to make a new link so a conversation can have many members
-    pass
+    # Make sure this hasn't been added already
+    sorted_conversation_posts = conversation.twitterconversationpost_set.order_by('index').all()
+    if len(sorted_conversation_posts):
+        if sorted_conversation_posts.last().post.content == message:
+            return message
+
+    # This has not been added to the convo yet, so proceed
+    post = TwitterPost.create(author=bot, content=message)
+
+    index = conversation.twitterconversationpost_set.count()
+    conversation_post = TwitterConversationPost.create(author=bot, post=post, conversation=conversation, index=index)
+
+    return conversation_post.content
 
 
 def add_new_tweets_to_emotion_bot(params):

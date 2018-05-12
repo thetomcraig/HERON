@@ -12,7 +12,9 @@ from bots.helpers.twitter_bot_utils import (add_new_tweets_to_emotion_bot,
                                             get_or_create_conversation_json,
                                             get_top_twitter_bots,
                                             list_all_emotion_twitter_bots,
-                                            scrape, update_top_twitter_bots)
+                                            scrape, update_top_twitter_bots,
+                                            add_message_to_group_convo,
+                                            get_group_conversation_json)
 from bots.helpers.twitter_getters import (catalog_tweet_replies,
                                           get_tweet_replies,
                                           get_tweets_over_reply_threshold_and_analyze_text_understanding)
@@ -74,6 +76,13 @@ def get_conversation(request, bot1_username, bot2_username):
     return JsonResponse(conversation_json)
 
 
+def get_group_conversation(request):
+    body = json.loads(request.body)
+    conversation_name = body.get('conversation_name')
+    json_data = get_group_conversation_json(conversation_name)
+    return JsonResponse(json_data)
+
+
 @csrf_exempt
 def update_conversation(request):
     """
@@ -85,6 +94,16 @@ def update_conversation(request):
     post_number = body.get('post_number', 1)
     new_post_json = add_to_twitter_conversation(author, partner, post_number=post_number)
     return JsonResponse(new_post_json)
+
+
+@csrf_exempt
+def update_group_conversation(request):
+    body = json.loads(request.body)
+    username = body.get('username')
+    message = body.get('message')
+    conversation_name = body.get('conversation_name')
+    content = add_message_to_group_convo(username, message, conversation_name)
+    return JsonResponse({'success': 'true', 'content': content})
 
 
 @csrf_exempt
