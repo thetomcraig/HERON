@@ -99,7 +99,7 @@ def update_conversation(request):
 
 @csrf_exempt
 def update_group_conversation(request):
-    body = json.loads(request.body)
+    body = json.loads(request.body.decode('utf-8'))
     username = body.get('username')
     message = body.get('message')
     conversation_name = body.get('conversation_name')

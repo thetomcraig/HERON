@@ -13,7 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def message_received(request):
-    body = json.loads(request.body)
+    print('received call')
+    body = json.loads(request.body.decode('utf-8'))
     key = body.get('key')
     message = body.get('message')
     conversation_name = body.get('conversation_name')
@@ -28,7 +29,7 @@ def message_received(request):
     state.message = next_message
     return JsonResponse({'success': 'true',
                          'speaker': state.speaker,
-                         'mesage': state.message})
+                         'message': state.message})
 
 
 def reply_query(request):

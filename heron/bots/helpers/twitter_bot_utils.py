@@ -460,6 +460,9 @@ def add_to_twitter_conversation(bot_username, partner_username, post_number=1):
 
 
 def add_message_to_group_convo(bot_username, message, conversation_name):
+    print(bot_username)
+    print(message)
+    print(conversation_name)
     conversation = TwitterConversation.objects.get_or_create(name=conversation_name)[0]
     bot = TwitterBot.objects.get_or_create(username=bot_username)[0]
 
