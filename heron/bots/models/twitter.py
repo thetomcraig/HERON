@@ -12,7 +12,7 @@ class TwitterBot(base.Bot):
 
 class TwitterPost(base.Sentence):
     author = models.ForeignKey(TwitterBot, default=None, null=True)
-    emotion = models.CharField(max_length=1000, default=None, null=True)
+    emotion = models.CharField(max_length=1000, default='PLACEHOLDER', null=True)
     tweet_id = models.IntegerField()
 
 
@@ -49,8 +49,9 @@ class TwitterMention(models.Model):
 
 
 class TwitterConversation(models.Model):
-    author = models.ForeignKey(TwitterBot, related_name='author')
-    partner = models.ForeignKey(TwitterBot)
+    name = models.CharField(max_length=1000, default='PLACEHOLDER')
+    author = models.ForeignKey(TwitterBot, related_name='author', null=True)
+    partner = models.ForeignKey(TwitterBot, null=True)
 
 
 class TwitterConversationPost(models.Model):

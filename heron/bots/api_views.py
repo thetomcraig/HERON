@@ -2,21 +2,23 @@
 Endpoints that are publicly available, mostly for debugging
 """
 import json
-from django.http import JsonResponse
 
-from bots.helpers.twitter_bot_utils import (add_to_twitter_conversation,
+from bots.helpers.twitter_bot_utils import (add_new_tweets_to_emotion_bot,
+                                            add_to_twitter_conversation,
                                             clear_all_twitter_conversations,
+                                            clear_twitter_bot,
                                             clear_twitter_conversation,
                                             create_markov_post, get_info,
                                             get_or_create_conversation_json,
                                             get_top_twitter_bots,
-                                            scrape,
-                                            add_new_tweets_to_emotion_bot,
-                                            clear_twitter_bot,
-                                            list_all_emotion_twitter_bots)
-from bots.helpers.twitter_getters import (get_tweet_replies,
-                                          get_tweets_over_reply_threshold_and_analyze_text_understanding,
-                                          catalog_tweet_replies)
+                                            list_all_emotion_twitter_bots,
+                                            scrape, update_top_twitter_bots,
+                                            add_message_to_group_convo,
+                                            get_group_conversation_json)
+from bots.helpers.twitter_getters import (catalog_tweet_replies,
+                                          get_tweet_replies,
+                                          get_tweets_over_reply_threshold_and_analyze_text_understanding)
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -33,6 +35,11 @@ def get_bot_info(request, username):
 def scrape_bot(request, username):
     response_data = scrape(username)
     return JsonResponse(response_data)
+
+
+def scrape_bots(request):
+    success = update_top_twitter_bots()
+    return JsonResponse({'success': str(success)})
 
 
 def clear_bot_tweets(request, username):
@@ -70,6 +77,14 @@ def get_conversation(request, bot1_username, bot2_username):
 
 
 @csrf_exempt
+def get_group_conversation(request):
+    body = json.loads(request.body)
+    conversation_name = body.get('conversation_name')
+    json_data = get_group_conversation_json(conversation_name)
+    return JsonResponse(json_data)
+
+
+@csrf_exempt
 def update_conversation(request):
     """
     Given two conversation partners, make a new post for whomever is next
@@ -80,6 +95,16 @@ def update_conversation(request):
     post_number = body.get('post_number', 1)
     new_post_json = add_to_twitter_conversation(author, partner, post_number=post_number)
     return JsonResponse(new_post_json)
+
+
+@csrf_exempt
+def update_group_conversation(request):
+    body = json.loads(request.body.decode('utf-8'))
+    username = body.get('username')
+    message = body.get('message')
+    conversation_name = body.get('conversation_name')
+    content = add_message_to_group_convo(username, message, conversation_name)
+    return JsonResponse({'success': 'true', 'content': content})
 
 
 @csrf_exempt
