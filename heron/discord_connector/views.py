@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 import copy
 import json
-from . import state
+from django.conf import settings
+from .state_manager import initialize_conversation_sate, add_bot_to_conversation_state
 from bots.helpers.twitter_bot_utils import add_message_to_group_convo
 from bots.models.twitter import TwitterConversation, TwitterBot, TwitterPost
 import random
@@ -13,27 +14,27 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 @csrf_exempt
-def message_received(request):
-    print('received call')
+def bot_online(request):
     body = json.loads(request.body.decode('utf-8'))
-    username = body.get('name')
-    message = body.get('message')
+    key = body.get('key')
+    username = body.get('username')
     conversation_name = body.get('conversation_name')
+# Get the global state for this convo, and add the bot
+    state = settings.DISCORD_CONVERSATION_STATES.get(conversation_name, {})
+    state = add_bot_to_conversation_state(state, key, username)
+    settings.DISCORD_CONVERSATION_STATES.setdefault(conversation_name, state)
+    print(state)
 
-    # First save the new message to the database
-    add_message_to_group_convo(username, message, conversation_name)
-
-    repliers_key, next_message = generate_next_speaker_and_message(conversation_name)
-
-    state.message = next_message
-
-    reply = state.message
-    return JsonResponse({'key': repliers_key,
-                         'reply': reply})
+    return JsonResponse({'success': True})
 
 
-def reply_query(request):
-    return JsonResponse({'success': 'true', 'next_message': state.next_message, 'next_speaker': state.next_speaker})
+@csrf_exempt
+def start_generator(_):
+    conversation_name = 'general'
+    state = settings.DISCORD_CONVERSATION_STATES.get(conversation_name, {})
+    print (state)
+
+    return JsonResponse({'success': True})
 
 
 def generate_next_speaker_and_message(conversation_name):
@@ -60,7 +61,6 @@ def generate_next_speaker(conversation_name):
     except:
         pass
     next_speaker = possible_next_speakers[0]
-
 
     print('next_speaker')
     print(next_speaker)

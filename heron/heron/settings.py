@@ -126,3 +126,6 @@ WATSON_UNDERSTANDING_USERNAME = local_settings.watson_understanding_username
 WATSON_UNDERSTANDING_PASSWORD = local_settings.watson_understanding_password
 
 WATSON_EMOTIONS = ['anger', 'joy', 'sadness', 'fear', 'disgust']
+
+DISCORD_CONVERSATION_NAME = local_settings.discord_conversation_name
+DISCORD_CONVERSATION_STATES = local_settings.discord_conversation_states
