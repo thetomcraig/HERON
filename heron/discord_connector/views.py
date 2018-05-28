@@ -6,8 +6,6 @@ from django.conf import settings
 from .state_manager import initialize_conversation_sate, add_bot_to_conversation_state
 from bots.helpers.twitter_bot_utils import add_message_to_group_convo
 from bots.models.twitter import TwitterConversation, TwitterBot, TwitterPost
-import random
-from time import sleep
 
 from django.http import JsonResponse
 
@@ -30,34 +28,34 @@ def bot_online(request):
 
 
 @csrf_exempt
-def start_generator(_):
+def get_message(request):
+    body = json.loads(request.body.decode('utf-8'))
+    username = body.get('username')
+    conversation_name = body.get('conversation_name')
+
+    next_speaker, message = run_generator(conversation_name)
+
+    if not (next_speaker and message):
+        return JsonResponse({'success': True, 'should_send': False, 'message': None})
+
+    should_send = username == next_speaker
+    return JsonResponse({'success': True, 'should_send': should_send, 'message': message})
+
+
+def run_generator(conversation_name):
     conversation_name = settings.DISCORD_CONVERSATION_NAME
     state = settings.DISCORD_CONVERSATION_STATES.get(conversation_name, {})
+    print (state)
 
-    def termination_fn():
-        return False
+    next_speaker, next_message, convo, index = generate_next_speaker_and_message(state, conversation_name)
+    if not next_speaker:
+        return None, None
 
-    run_generator(conversation_name, state, 2, termination_fn)
+    bot = TwitterBot.objects.get(username=next_speaker)
+    post = TwitterPost.objects.create(author=bot, content=next_message)
+    convo.twitterconversationpost_set.create(index=index, author=bot, post=post)
 
-    return JsonResponse({'success': True})
-
-
-def run_generator(conversation_name, state, delay, termination_fn):
-    while (not termination_fn()):
-        sleep(delay)
-        print (state)
-        print ('\n')
-
-        next_speaker, next_message, convo, index = generate_next_speaker_and_message(state, conversation_name)
-        if not next_speaker:
-            continue
-        bot = TwitterBot.objects.get(username=next_speaker)
-        post = TwitterPost.objects.create(author=bot, content=next_message)
-        convo.twitterconversationpost_set.create(index=index, author=bot, post=post)
-
-        print(next_speaker)
-        print(next_message)
-        print ('\n')
+    return next_speaker, next_message
 
 
 def generate_next_speaker_and_message(state, conversation_name):

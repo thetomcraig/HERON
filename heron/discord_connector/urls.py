@@ -3,5 +3,5 @@ from django.conf.urls import url
 
 urlpatterns = [
     url(r'bot_online', views.bot_online),
-    url(r'start_generator', views.start_generator),
+    url(r'get_message', views.get_message),
 ]
