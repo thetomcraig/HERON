@@ -14,6 +14,12 @@ from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def bot_online(request):
+    """
+    Called when a bot logs in on Discord.
+    The Bot's information is saved in the conversation's state
+    Using the passed in conversaion name,
+    the conversation in the current state is updated to include the bot
+    """
     body = json.loads(request.body.decode('utf-8'))
     key = body.get('key')
     username = body.get('username')
@@ -22,13 +28,16 @@ def bot_online(request):
     state = settings.DISCORD_CONVERSATION_STATES.get(conversation_name, {})
     state = add_bot_to_conversation_state(state, key, username)
     settings.DISCORD_CONVERSATION_STATES.setdefault(conversation_name, state)
-    print(state.get('bots_in_group_convo'))
 
     return JsonResponse({'success': True})
 
 
 @csrf_exempt
 def get_message(request):
+    """
+    Called by a Discord bot when they need a new message
+    We run the generator and generate a new message and a new speaker to send it
+    """
     body = json.loads(request.body.decode('utf-8'))
     username = body.get('username')
     conversation_name = body.get('conversation_name')
@@ -43,9 +52,13 @@ def get_message(request):
 
 
 def run_generator(conversation_name):
-    conversation_name = settings.DISCORD_CONVERSATION_NAME
+    """
+    Input:
+        conversation_name: name of conversation to analyze
+    Output:
+        username of next speaker, message for that speaker to send next
+    """
     state = settings.DISCORD_CONVERSATION_STATES.get(conversation_name, {})
-    print (state)
 
     next_speaker, next_message, convo, index = generate_next_speaker_and_message(state, conversation_name)
     if not next_speaker:
@@ -59,8 +72,11 @@ def run_generator(conversation_name):
 
 
 def generate_next_speaker_and_message(state, conversation_name):
-    print('conversation_name')
-    print(conversation_name)
+    """
+    Input:
+        state: The entire state of the conversation
+        conversation_name: The name of the conversation
+    """
     convo = TwitterConversation.objects.get(name=conversation_name)
 
     next_speaker, index = generate_next_speaker(state, convo)
@@ -71,8 +87,9 @@ def generate_next_speaker_and_message(state, conversation_name):
 
 def generate_next_speaker(state, convo):
     """
-    Given the conversatino name
     Get the conversation and all previous posts - there should be at least one
+    Last speaker was author of that post
+    Generate new index for new post, and determine new speaker
     """
     posts = convo.twitterconversationpost_set.order_by('index').all()
     last_speaker = posts.last().author.username
@@ -83,6 +100,7 @@ def generate_next_speaker(state, convo):
         print('not enough people conversation yet')
         return None, -1
 
+    # Replace with random stuff. for debugging just doing the other user
     try:
         possible_next_speakers.remove(last_speaker)
     except Exception as e:
@@ -94,4 +112,5 @@ def generate_next_speaker(state, convo):
 
 def generate_next_message(state, convo):
     next_message = 'bot reply'
+    print(state)
     return next_message
