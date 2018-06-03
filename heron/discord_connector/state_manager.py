@@ -1,4 +1,5 @@
 # Utilities for managing the state of a discord conversation
+# TODO - should this exist in the DB, and be managed with ORM?
 
 
 def create_names_to_ids_map(ids_to_names_dict):
@@ -11,7 +12,6 @@ def create_names_to_ids_map(ids_to_names_dict):
 def initialize_conversation_sate(ids_to_names_map={}, blacklist=[]):
     names_to_ids_map = create_names_to_ids_map(ids_to_names_map)
     state = {
-        'messages': [],
         'next_speaker': '',
         'next_message': '',
         'bots_in_group_convo': [],

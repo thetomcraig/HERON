@@ -3,9 +3,12 @@ from __future__ import unicode_literals
 import copy
 import json
 from django.conf import settings
+import random
+from bots.helpers.watson_utils import interpret_watson_keywords_and_entities
 from .state_manager import initialize_conversation_sate, add_bot_to_conversation_state
 from bots.helpers.twitter_bot_utils import add_message_to_group_convo
 from bots.models.twitter import TwitterConversation, TwitterBot, TwitterPost
+from bots.helpers.utils import create_post_cache, replace_tokens
 
 from django.http import JsonResponse
 
@@ -60,15 +63,15 @@ def run_generator(conversation_name):
     """
     state = settings.DISCORD_CONVERSATION_STATES.get(conversation_name, {})
 
-    next_speaker, next_message, convo, index = generate_next_speaker_and_message(state, conversation_name)
-    if not next_speaker:
+    next_speaker_username, next_message, convo, index = generate_next_speaker_and_message(state, conversation_name)
+    if not next_speaker_username:
         return None, None
 
-    bot = TwitterBot.objects.get(username=next_speaker)
+    bot = TwitterBot.objects.get(username=next_speaker_username)
     post = TwitterPost.objects.create(author=bot, content=next_message)
     convo.twitterconversationpost_set.create(index=index, author=bot, post=post)
 
-    return next_speaker, next_message
+    return next_speaker_username, next_message
 
 
 def generate_next_speaker_and_message(state, conversation_name):
@@ -78,23 +81,22 @@ def generate_next_speaker_and_message(state, conversation_name):
         conversation_name: The name of the conversation
     """
     convo = TwitterConversation.objects.get(name=conversation_name)
+    posts = convo.twitterconversationpost_set.order_by('index').all()
 
-    next_speaker, index = generate_next_speaker(state, convo)
-    next_message = generate_next_message(state, convo)
+    next_speaker_username = generate_next_speaker(state, posts)
+    next_message, index = generate_next_message(state, convo, next_speaker_username, posts)
 
-    return next_speaker, next_message, convo, index
+    return next_speaker_username, next_message, convo, index
 
 
-def generate_next_speaker(state, convo):
+def generate_next_speaker(state, posts):
     """
     Get the conversation and all previous posts - there should be at least one
     Last speaker was author of that post
-    Generate new index for new post, and determine new speaker
+    Determine new speaker
     """
-    posts = convo.twitterconversationpost_set.order_by('index').all()
-    last_speaker = posts.last().author.username
-    last_index = posts.last().index
-    index = last_index + 1
+    last_post = posts.last()
+    last_speaker = last_post.author.username
     possible_next_speakers = copy.deepcopy(state.get('bots_in_group_convo'))
     if len(possible_next_speakers) < 2:
         print('not enough people conversation yet')
@@ -105,12 +107,83 @@ def generate_next_speaker(state, convo):
         possible_next_speakers.remove(last_speaker)
     except Exception as e:
         print(e)
-    next_speaker = possible_next_speakers[0]
+    next_speaker_username = possible_next_speakers[0]
 
-    return next_speaker, index
+    return next_speaker_username
 
 
-def generate_next_message(state, convo):
-    next_message = 'bot reply'
-    print(state)
-    return next_message
+def generate_next_message(state, convo, next_speaker_username, posts):
+    """
+    Look at convo
+        Iterate through the conversation
+        Find recent sentiment and key terms/subjects
+
+    Generate new message
+        Make markov message from next_speaker
+        TODO - Need some other rules here for iterating on speech patterns
+            Basically need things to be more AI/Machine Learning esque
+        Keyword replacement
+
+    """
+    next_message = 'None made'
+    next_index = -1
+    previous_messages = []
+    try:
+        last_post = posts.last()
+        next_index = last_post.index + 1
+        previous_messages.append(last_post.post.content)
+    except Exception:
+        print('No last post!')
+        print('List of posts passed in with len: {}'.format(len(posts)))
+
+    # Number of previous messages to look at/analyze
+    # Start at 1 because we already recorded the last one
+    lookback = 4
+    counter = 1
+    reversed_posts = reversed(posts)
+    try:
+        while(counter < lookback):
+            previous_messages.append(reversed_posts[counter])
+            counter += 1
+    except IndexError:
+        print('Index Error; number of posts less than lookback range')
+    finally:
+        print('gathered {} previous posts'.format(counter))
+
+    # Found the last couple of messages, now look at the bot
+    bot = TwitterBot.objects.get(username=next_speaker_username)
+    all_beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
+    all_caches = bot.twitterpostcache_set.all()
+    # The template represents how this user talks,
+    # We will alter this text based on the previous conversation posts
+    new_markov_template, randomness = bot.apply_markov_chains_inner(all_beginning_caches, all_caches)
+    _, markov_keywords, markov_entities = interpret_watson_keywords_and_entities(new_markov_template)
+
+    # TODO this should turn into a loop of some sort
+    last_message = reversed_posts[0]
+    # Use the emotion of the last speaker to figure out what to say, maybe means adding a new user??
+    overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(last_message)
+
+    # Look at the keywords in the previous post and see if they can be injected into the new markov post
+    replacements = {}
+    for keyword, data in keywords.iteritems():
+        emotion = data.get('emotion')
+        for markov_keyword, markov_data in markov_keywords.iteritems():
+            markov_emotion = markov_data.get('emotion')
+            if emotion == markov_emotion:
+                replacements[markov_keyword] = keyword
+
+    for entity, data in entities.iteritems():
+        emotion = data.get('emotion')
+        for markov_keyword, markov_data in markov_keywords.iteritems():
+            markov_emotion = markov_data.get('emotion')
+            if emotion == markov_emotion:
+                if markov_keyword not in replacements.keys():
+                    replacements[markov_keyword] = entity
+
+    for phrase, replacement in replacements.iteritems():
+        new_markov_template = new_markov_template.replace(phrase, replacement)
+
+    next_message = new_markov_template
+    create_post_cache(next_message, bot.twitterpostcache_set)
+    return next_message, next_index
