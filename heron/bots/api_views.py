@@ -8,11 +8,13 @@ from bots.helpers.twitter_bot_utils import (add_new_tweets_to_emotion_bot,
                                             clear_all_twitter_conversations,
                                             clear_twitter_bot,
                                             clear_twitter_conversation,
-                                            create_markov_post, get_info,
+                                            create_markov_post,
+                                            get_twitter_bot_info,
                                             get_or_create_conversation_json,
-                                            get_top_twitter_bots,
+                                            get_all_twitter_bots,
                                             list_all_emotion_twitter_bots,
-                                            scrape, update_top_twitter_bots,
+                                            scrape,
+                                            scrape_all_twitter_bots,
                                             add_message_to_group_convo,
                                             get_group_conversation_json)
 from bots.helpers.twitter_getters import (
@@ -23,14 +25,14 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 
-def list_all_bots(limit=None):
-  top = get_top_twitter_bots()
-  return JsonResponse(top)
+def get_all_bots(limit=None):
+  success, all_bot_data = get_all_twitter_bots()
+  return JsonResponse({'success': str(success), 'data': all_bot_data})
 
 
-def get_bot_info(request, username):
-  info = get_info(username)
-  return JsonResponse(info)
+def get_bot(request, username):
+  data = get_twitter_bot_info(username)
+  return JsonResponse({'success': str(True), 'data': data})
 
 
 def scrape_bot(request, username):
@@ -38,9 +40,12 @@ def scrape_bot(request, username):
   return JsonResponse(response_data)
 
 
-def scrape_bots(request):
-  success = update_top_twitter_bots()
-  return JsonResponse({'success': str(success)})
+def scrape_all_bots(request):
+  """
+  'people_dict' contains all the data for the updates TwitterBots
+  """
+  success, people_dict = scrape_all_twitter_bots()
+  return JsonResponse({'success': str(success), 'data': str(people_dict)})
 
 
 def clear_bot_tweets(request, username):

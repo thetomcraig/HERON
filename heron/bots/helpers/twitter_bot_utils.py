@@ -22,72 +22,71 @@ from .utils import create_post_cache, replace_tokens
 from bots.helpers.twitter_getters import get_tweets_over_reply_threshold_and_analyze_text_understanding
 
 
-def get_top_twitter_users(limit=50):
+def get_twitter_bot_info(username):
+  bot = TwitterBot.objects.get(username=username)
+  real_posts = {x.id: x.content for x in bot.twitterpost_set.all()}
+  fake_posts = {x.id: x.content for x in bot.twitterpostmarkov_set.all()}
+  bot_data = {
+      'real_name': bot.real_name,
+      'first_name': bot.first_name,
+      'last_name': bot.last_name,
+      'username': bot.username,
+      'avatar': bot.avatar,
+      'real posts': real_posts,
+      'fake posts': fake_posts,
+  }
+  return bot_data
+
+
+def get_all_twitter_bots():
+  all_bots = TwitterBot.objects.all()
+  bot_data = {x.id: get_twitter_bot_info(x.username) for x in all_bots}
+  return True, bot_data
+
+
+def get_top_twitter_users():
   t = TwitterApiInterface(
       settings.TWEEPY_CONSUMER_KEY,
       settings.TWEEPY_CONSUMER_SECRET,
       settings.TWEEPY_ACCESS_TOKEN,
       settings.TWEEPY_ACCESS_TOKEN_SECRET)
 
-  people_dict = t.scrape_top_users(limit)
+  people_dict = t.scrape_top_users()
 
   return people_dict
 
 
-def get_top_twitter_bots(limit=50):
-  # TODO Use order_by
-  top_bots = TwitterBot.objects.all()
-  if limit:
-    top_bots = top_bots[:limit]
-  bot_data = {x.id: {'first_name': x.first_name, 'username': x.username} for x in top_bots}
-  return bot_data
-
-
-def list_all_emotion_twitter_bots():
-  bot_data = {}
-  for emotion in settings.WATSON_EMOTIONS:
-    bot_name = emotion + '_bot'
-    bot, _ = TwitterBot.objects.get_or_create(username=bot_name)
-    tweets = TwitterPost.objects.filter(author=bot)
-    bot_data[bot_name] = {'tweets': [x.content for x in tweets]}
-  return bot_data
-
-
-def get_emotion_tweets():
-  bot_meta_data = {}
-  for emotion in settings.WATSON_EMOTIONS:
-    tweets = TwitterPost.objects.filter(emotion=emotion)
-    bot_meta_data[emotion] = []
-    for tweet in tweets:
-      bot_meta_data[emotion].append(
-          {'id': tweet.id,
-           'emotion': emotion,
-           'content': tweet.content})
-
-  return bot_meta_data
-
-
-def update_top_twitter_bots():
+def create_twitter_bots_for_top_users():
+  """
+  Using the Twitter API interface, find the 100 most popular users
+  For each one, create/update a Twitterbot object
+  """
   people_dict = get_top_twitter_users()
+  updated_bots = []
 
   for entry in people_dict:
     bot = None
-    bot = TwitterBot.objects.get_or_create(username=entry['uname'])[0]
+    bot = TwitterBot.objects.get_or_create(username=entry['username'])[0]
 
-    bot.username = entry['uname']
+    bot.username = entry['username']
     bot.real_name = entry['name']
     bot.avatar = entry['avatar']
     bot.save()
+    updated_bots.append(bot)
 
-  return True, people_dict
+  all_twitter_bot_data = {x.id: get_twitter_bot_info(x.username) for x in updated_bots}
+  return True, all_twitter_bot_data
 
 
-def scrape_top_twitter_bots():
-  update_top_twitter_bots()
-
+def scrape_all_twitter_bots():
   all_twitter_bots = TwitterBot.objects.all()
+
+  response_data = {}
   for bot in all_twitter_bots:
-    scrape_twitter_bot(bot)
+    bot_data = scrape_twitter_bot(bot)
+    response_data[bot.id] = bot_data
+
+  return response_data
 
 
 def scrape_twitter_bot(bot):
@@ -145,25 +144,33 @@ def scrape(username):
   return data
 
 
+def list_all_emotion_twitter_bots():
+  bot_data = {}
+  for emotion in settings.WATSON_EMOTIONS:
+    bot_name = emotion + '_bot'
+    bot, _ = TwitterBot.objects.get_or_create(username=bot_name)
+    tweets = TwitterPost.objects.filter(author=bot)
+    bot_data[bot_name] = {'tweets': [x.content for x in tweets]}
+  return bot_data
+
+
+def get_emotion_tweets():
+  bot_meta_data = {}
+  for emotion in settings.WATSON_EMOTIONS:
+    tweets = TwitterPost.objects.filter(emotion=emotion)
+    bot_meta_data[emotion] = []
+    for tweet in tweets:
+      bot_meta_data[emotion].append(
+          {'id': tweet.id,
+           'emotion': emotion,
+           'content': tweet.content})
+
+  return bot_meta_data
+
+
 def clear_twitter_bot(username):
   bot = TwitterBot.objects.get(username=username)
   bot.twitterpost_set.all().delete()
-
-
-def get_info(username):
-  bot = TwitterBot.objects.get(username=username)
-  real_posts = {x.id: x.content for x in bot.twitterpost_set.all()}
-  fake_posts = {x.id: x.content for x in bot.twitterpostmarkov_set.all()}
-  bot_data = {
-      'real_name': bot.real_name,
-      'first_name': bot.first_name,
-      'last_name': bot.last_name,
-      'username': bot.username,
-      'avatar': bot.avatar,
-      'real posts': real_posts,
-      'fake posts': fake_posts,
-  }
-  return bot_data
 
 
 def get_bot_attributes(username):
