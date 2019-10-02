@@ -154,7 +154,7 @@ def generate_next_message(state, convo, next_speaker_username, posts):
     bot = TwitterBot.objects.get(username=next_speaker_username)
     all_beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
     all_caches = bot.twitterpostcache_set.all()
-    # The template represents how this user talks,
+    # The template represents how this bot talks,
     # We will alter this text based on the previous conversation posts
     new_markov_template, randomness = bot.apply_markov_chains_inner(all_beginning_caches, all_caches)
     _, markov_keywords, markov_entities = interpret_watson_keywords_and_entities(new_markov_template)

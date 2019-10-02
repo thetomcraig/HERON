@@ -25,32 +25,27 @@ class TwitterApiInterface:
     self.api = tweepy.API(self.auth)
 
   def scrape_top_users(self, limit):
-    # Top 100 users
     people_dict = []
     browser = mechanize.Browser()
     ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 (compatible;)'
     browser.addheaders = [('User-Agent', ua), ('Accept', '*/*')]
     browser.set_handle_robots(False)
 
-    url = 'http://twittercounter.com/pages/100'
+    url = 'https://friendorfollow.com/twitter/most-followers/'
     browser.open(url)
 
     html = browser.response().read().decode('utf-8', 'ignore')
     raw = BeautifulSoup(html, "html.parser")
-    browser.close(url)
+    browser.close()
 
-    def has_class_and_data_pos(tag):
-      return tag.has_attr('class') and tag.has_attr('data-pos')
-    people = raw.find_all(has_class_and_data_pos)
-    print raw
-    for person in people:
-      name = person.find(class_='name').text
-      uname = person.find(class_='uname').text.replace('@', '')
-      avatar = person.find('img')['src']
+    people_dict = []
+    people_divs = raw.findAll("div", {"class": "text-holder"})
+    for person in people_divs:
+      uname = person.find(class_="mail").next_element.text
+      name = ''.join(person.contents[1].text.split('.')[1::]).strip()
+      avatar = person.parent.find('img').attrs.get('src')
       people_dict.append({'name': name, 'uname': uname, 'avatar': avatar})
 
-      if len(people_dict) >= limit:
-        return people_dict
     return people_dict
 
   def get_tweets_from_user(self, username, limit):
