@@ -3,20 +3,27 @@ Endpoints that are publicly available, mostly for debugging
 """
 import json
 
-from bots.helpers.twitter_bot_utils import (add_new_tweets_to_emotion_bot,
-                                            add_to_twitter_conversation,
-                                            clear_all_twitter_conversations,
-                                            clear_twitter_bot,
-                                            clear_twitter_conversation,
-                                            create_markov_post,
-                                            get_twitter_bot_info,
-                                            get_or_create_conversation_json,
-                                            get_all_twitter_bots,
-                                            list_all_emotion_twitter_bots,
-                                            scrape,
-                                            scrape_all_twitter_bots,
-                                            add_message_to_group_convo,
-                                            get_group_conversation_json)
+from bots.helpers.twitter_bot_utils.emotion_utils import (
+    list_all_emotion_twitter_bots,
+    add_new_tweets_to_emotion_bot
+)
+from bots.helpers.twitter_bot_utils.crud_utils import (
+    clear_twitter_bot,
+    get_all_twitter_bots,
+    get_twitter_bot_info
+)
+from bots.helpers.twitter_bot_utils.conversation_utils import (
+    add_to_twitter_conversation,
+    clear_all_twitter_conversations,
+    clear_twitter_conversation,
+    create_markov_post,
+    get_or_create_conversation_json,
+    add_message_to_group_convo,
+    get_group_conversation_json)
+from bots.helpers.twitter_bot_utils.scraping_utils import (
+    scrape,
+    scrape_all_twitter_bots,
+)
 from bots.helpers.twitter_getters import (
     catalog_tweet_replies,
     get_tweet_replies,

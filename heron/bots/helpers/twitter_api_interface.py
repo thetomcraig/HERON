@@ -39,7 +39,7 @@ class TwitterApiInterface:
     browser.close()
     return raw_html
 
-  def scrape_top_users(self):
+  def find_top_users(self):
     """
     Use mechanize and beautiful soup to get the data
     Defaults to the top 100 most popular accounts

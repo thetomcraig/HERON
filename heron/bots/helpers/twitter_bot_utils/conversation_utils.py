@@ -1,220 +1,17 @@
-"""
-Very general utilities for working with twitter bots, post, conversations
-CRUD functions happen here
-"""
 import random
-import HTMLParser
 from collections import defaultdict
 
-import nltk
-from bots.helpers.twitter_api_interface import TwitterApiInterface
 from bots.helpers.watson_utils import interpret_watson_keywords_and_entities
 from bots.models.twitter import (TwitterBot, TwitterConversation,
                                  TwitterConversationPost, TwitterPost)
 from django.conf import settings
 from nltk.corpus import wordnet as wn
 from nltk.corpus import webtext
-from nltk.probability import FreqDist
 from rake_nltk import Rake
+import nltk
+from nltk.probability import FreqDist
 
-from .utils import create_post_cache, replace_tokens
-
-from bots.helpers.twitter_getters import get_tweets_over_reply_threshold_and_analyze_text_understanding
-
-
-def get_twitter_bot_info(username):
-  bot = TwitterBot.objects.get(username=username)
-  real_posts = {x.id: x.content for x in bot.twitterpost_set.all()}
-  fake_posts = {x.id: x.content for x in bot.twitterpostmarkov_set.all()}
-  bot_data = {
-      'real_name': bot.real_name,
-      'first_name': bot.first_name,
-      'last_name': bot.last_name,
-      'username': bot.username,
-      'avatar': bot.avatar,
-      'real posts': real_posts,
-      'fake posts': fake_posts,
-  }
-  return bot_data
-
-
-def get_all_twitter_bots():
-  all_bots = TwitterBot.objects.all()
-  bot_data = {x.id: get_twitter_bot_info(x.username) for x in all_bots}
-  return True, bot_data
-
-
-def get_top_twitter_users():
-  t = TwitterApiInterface(
-      settings.TWEEPY_CONSUMER_KEY,
-      settings.TWEEPY_CONSUMER_SECRET,
-      settings.TWEEPY_ACCESS_TOKEN,
-      settings.TWEEPY_ACCESS_TOKEN_SECRET)
-
-  people_dict = t.scrape_top_users()
-
-  return people_dict
-
-
-def create_twitter_bots_for_top_users():
-  """
-  Using the Twitter API interface, find the 100 most popular users
-  For each one, create/update a Twitterbot object
-  """
-  people_dict = get_top_twitter_users()
-  updated_bots = []
-
-  for entry in people_dict:
-    bot = None
-    bot = TwitterBot.objects.get_or_create(username=entry['username'])[0]
-
-    bot.username = entry['username']
-    bot.real_name = entry['name']
-    bot.avatar = entry['avatar']
-    bot.save()
-    updated_bots.append(bot)
-
-  all_twitter_bot_data = {x.id: get_twitter_bot_info(x.username) for x in updated_bots}
-  return True, all_twitter_bot_data
-
-
-def scrape_all_twitter_bots():
-  all_twitter_bots = TwitterBot.objects.all()
-
-  response_data = {}
-  for bot in all_twitter_bots:
-    bot_data = scrape_twitter_bot(bot)
-    response_data[bot.id] = bot_data
-
-  return response_data
-
-
-def scrape_twitter_bot(bot):
-  """
-  Scrape the given user with tweepy
-  take all of their tweets and
-  turn them into TwitterPost objects
-  strip out uncommon words (links, hashtags, users)
-  and save them seperately in instances, then
-  replace with dummy words.
-  """
-  response_data = {}
-
-  t = TwitterApiInterface(
-      settings.TWEEPY_CONSUMER_KEY,
-      settings.TWEEPY_CONSUMER_SECRET,
-      settings.TWEEPY_ACCESS_TOKEN,
-      settings.TWEEPY_ACCESS_TOKEN_SECRET)
-
-  tweets = t.get_tweets_from_user(bot.username, 100)
-
-  response_data['new tweets'] = len(tweets)
-  response_data['tweets'] = {}
-
-  idx = 0
-  for tweet_id, tweet in tweets.iteritems():
-
-    words = tweet.split()
-    for word in words:
-      if "@" in word:
-        bot.twittermention_set.create(content=word)
-      if "http" in word:
-        bot.twitterlink_set.create(content=word)
-      if "#" in word:
-        bot.twitterhashtag_set.create(content=word)
-
-    response_data['tweets'][idx] = str(tweet)
-
-    h = HTMLParser.HTMLParser()
-    tweet = h.unescape(tweet.decode('utf-8'))
-
-    post = TwitterPost.objects.create(author=bot, content=tweet, tweet_id=tweet_id)
-
-    create_post_cache(post.content, bot.twitterpostcache_set)
-    idx += 1
-
-  return response_data
-
-
-def scrape(username):
-  bot = TwitterBot.objects.get(username=username)
-  scrape_response = scrape_twitter_bot(bot)
-  data = {'success': True, 'new tweets': scrape_response['new tweets'], 'tweets':
-          scrape_response['tweets']}
-  return data
-
-
-def list_all_emotion_twitter_bots():
-  bot_data = {}
-  for emotion in settings.WATSON_EMOTIONS:
-    bot_name = emotion + '_bot'
-    bot, _ = TwitterBot.objects.get_or_create(username=bot_name)
-    tweets = TwitterPost.objects.filter(author=bot)
-    bot_data[bot_name] = {'tweets': [x.content for x in tweets]}
-  return bot_data
-
-
-def get_emotion_tweets():
-  bot_meta_data = {}
-  for emotion in settings.WATSON_EMOTIONS:
-    tweets = TwitterPost.objects.filter(emotion=emotion)
-    bot_meta_data[emotion] = []
-    for tweet in tweets:
-      bot_meta_data[emotion].append(
-          {'id': tweet.id,
-           'emotion': emotion,
-           'content': tweet.content})
-
-  return bot_meta_data
-
-
-def clear_twitter_bot(username):
-  bot = TwitterBot.objects.get(username=username)
-  bot.twitterpost_set.all().delete()
-
-
-def get_bot_attributes(username):
-  classifier_metrics = {
-      'mention_percentage': -1,
-      'retweet_percentage': -1,
-      'link_percentage': -1,
-      'hash_percentage': -1,
-      'verbosity': -1,
-  }
-  bot = TwitterBot.objects.get(username=username)
-  real_posts = bot.twitterpost_set.filter()
-
-  mention_tweets = 0
-  retweet_tweets = 0
-  link_tweets = 0
-  hash_tweets = 0
-  total_word_number = 0
-  for post in real_posts:
-    mention_tweets += 1 if settings.USER_TOKEN in post.content else 0
-    retweet_tweets += 1 if 'RT' in post.content else 0
-    link_tweets += 1 if settings.LINK_TOKEN in post.content else 0
-    hash_tweets += 1 if settings.TAG_TOKEN in post.content else 0
-    total_word_number += len(post.content.split(' '))
-
-  total_posts_len = 1.0
-  if len(real_posts) > 0:
-    total_posts_len = float(len(real_posts))
-
-  classifier_metrics['mention_percentage'] = mention_tweets / total_posts_len
-  classifier_metrics['retweet_percentage'] = retweet_tweets / total_posts_len
-  classifier_metrics['link_percentage'] = link_tweets / total_posts_len
-  classifier_metrics['hash_percentage'] = hash_tweets / total_posts_len
-  classifier_metrics['verbosity'] = total_word_number / 144 * total_posts_len
-  return classifier_metrics
-
-
-def find_word_frequency_for_user(username):
-  words = FreqDist()
-
-  bot = TwitterBot.objects.get(username=username)
-  for post in bot.twitterpost_set.all():
-    for word in nltk.tokenize.word_tokenize(post.content):
-      words[word] += 1
+from .twitter_post_utils import create_post_cache, replace_tokens
 
 
 def get_or_create_conversation(bot1_username, bot2_username):
@@ -489,36 +286,6 @@ def add_message_to_group_convo(bot_username, message, conversation_name):
   return conversation_post.post.content
 
 
-def add_new_tweets_to_emotion_bot(params):
-
-  twitter_source_users = params.get('twitter_source_users')
-  response_number = params.get('response_number')
-
-  new_bot_tweets = {}
-  for emotion in settings.WATSON_EMOTIONS:
-    new_bot_tweets[emotion] = []
-  threshold = 1
-  scrape_mode = 'single_reply'
-
-  for username in twitter_source_users:
-    print 'getting responses for source user: %s' % username
-    response_data = get_tweets_over_reply_threshold_and_analyze_text_understanding(
-        username, scrape_mode, threshold=int(threshold), max_response_number=int(response_number))
-    for tweet_id, tweet_data in response_data.iteritems():
-      replies = tweet_data['replies']
-      if replies:
-        for reply_id, reply_content in replies.iteritems():
-          emotion = reply_content['overarching_emotion']
-          if emotion in settings.WATSON_EMOTIONS:
-            content = reply_content['content']
-            bot, _ = TwitterBot.objects.get_or_create(username=emotion + '_bot')
-            bot.twitterpost_set.create(tweet_id=reply_id, content=content)
-            create_post_cache(content, bot.twitterpostcache_set)
-            new_bot_tweets[emotion].append(reply_content['content'])
-
-  return new_bot_tweets
-
-
 def create_markov_post(bot_id):
   """
   Takes all the words from all the twitter
@@ -546,3 +313,12 @@ def create_markov_post(bot_id):
 
   new_markov_post = bot.twitterpostmarkov_set.create(content=content, randomness=randomness)
   return new_markov_post.content
+
+
+def find_word_frequency_for_user(username):
+  words = FreqDist()
+
+  bot = TwitterBot.objects.get(username=username)
+  for post in bot.twitterpost_set.all():
+    for word in nltk.tokenize.word_tokenize(post.content):
+      words[word] += 1
