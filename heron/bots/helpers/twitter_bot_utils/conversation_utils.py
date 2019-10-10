@@ -22,10 +22,11 @@ def get_or_create_conversation(bot1_username, bot2_username):
   try:
     conversation = TwitterConversation.objects.get(author=bot, partner=partner)
   except:
-    try:
-      conversation = TwitterConversation.objects.get(author=partner, partner=bot)
-    except:
-      pass
+    pass
+  try:
+    conversation = TwitterConversation.objects.get(author=partner, partner=bot)
+  except:
+    pass
   if not conversation:
     conversation = TwitterConversation.objects.create(author=bot, partner=partner)
   return conversation
@@ -56,7 +57,7 @@ def get_group_conversation_json(conversation_name):
   return {conversation_name: conversation_json}
 
 
-def get_next_speaker_and_last_speaker(conversation_posts, author, partner):
+def get_next_speaker_and_last_speaker(conversation_posts, bot_1, bot_2):
   """
   Input:
       All the current posts in a 2 speaker conversation
@@ -64,14 +65,14 @@ def get_next_speaker_and_last_speaker(conversation_posts, author, partner):
   Output:
       Based on the given list of posts, return who speaks next and who spoke last
   """
-  last_speaker = author
-  next_speaker = partner
+  last_speaker = bot_1
+  next_speaker = bot_2
 
   last_post = conversation_posts.last()
   if last_post:
-    if last_post.author == next_speaker:
-      last_speaker = partner
-      next_speaker = author
+    if last_post.bot_1 == next_speaker:
+      last_speaker = bot_2
+      next_speaker = bot_1
 
   return next_speaker, last_speaker
 
@@ -94,59 +95,7 @@ def clear_all_twitter_conversations(bot_id):
     clear_twitter_conversation(c)
 
 
-# ALL TESTING BELOW THIS
-
-
-def get_key_phrases(conversation):
-  last_post = conversation.last()
-  r = Rake()
-  phrases = []
-  content = last_post.post.content
-  if content:
-    r.extract_keywords_from_text(content)
-    # TODO Filter further
-    phrases = r.get_ranked_phrases()
-
-  return phrases
-
-
-def generate_response_with_key_phrases(key_phrases, author, partner):
-  if not len(key_phrases):
-    return 'first post'
-  #  Will map key phrase to list of tweets that contain one of those phrases or a synonym
-  #  Search for tweets that contain the given key phrase or a synonym
-  #  Searh the author's tweets for something with that phrase
-  key_phrase_match_map = defaultdict(list)
-  for tweet in author.twitterpost_set.all():
-    for phrase in key_phrases:
-      if phrase in tweet.content:
-        key_phrase_match_map[phrase].append(tweet.content)
-      for synset in wn.synsets(phrase):
-        for lemma in synset.lemmas():
-          if lemma.name() in tweet.content:
-            key_phrase_match_map[lemma.name()].append(tweet.content)
-
-  for k, v in key_phrase_match_map.iteritems():
-    print 'KEY'
-    print k
-    print 'V'
-    print v
-
-  return 'STUB'
-
-
-def get_web_text_response(conversation_posts):
-  """
-  Use nltk's webtext to get a response then twitter-fy it
-  """
-  firefox_raw = webtext.raw(u'overheard.txt')
-  print type(firefox_raw)
-  print firefox_raw
-  print firefox_raw[:100]
-  return 'STUB'
-
-
-def generate_new_conversation_post_text(speaker_id, is_new_conversation, previous_posts):
+def generate_new_conversation_post_text(bot_id, is_new_conversation, previous_posts):
   """
   Input:
       Id of the bot who is going to speak
@@ -159,7 +108,7 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
   If there are previous posts, then analyze the last one with the watson API
   Use that data, and all the previous posts to construct a new one for the speaker
   """
-  bot = TwitterBot.objects.get(id=speaker_id)
+  bot = TwitterBot.objects.get(id=bot_id)
   if is_new_conversation:
     # Choose a random post from the user
     post_set = bot.twitterpost_set.all()
@@ -207,7 +156,7 @@ def generate_new_conversation_post_text(speaker_id, is_new_conversation, previou
   return reply
 
 
-def add_to_twitter_conversation(bot_username, partner_username, post_number=1):
+def add_to_twitter_conversation(bot1_username, bot2_username, post_number=1):
   """
   Input:
       Username of first speaker
@@ -221,7 +170,7 @@ def add_to_twitter_conversation(bot_username, partner_username, post_number=1):
   Then we generate the text for the new post and create a django object for it
   Then we return JSON corresponding to that new object
   """
-  conversation = get_or_create_conversation(bot_username, partner_username)
+  conversation = get_or_create_conversation(bot1_username, bot2_username)
   sorted_conversation_posts = conversation.twitterconversationpost_set.order_by('index').all()
 
   last_post = sorted_conversation_posts.last()
@@ -261,6 +210,57 @@ def add_to_twitter_conversation(bot_username, partner_username, post_number=1):
     last_speaker, next_speaker = next_speaker, last_speaker
     index += 1
   return new_posts_json
+
+# ALL TESTING BELOW THIS
+
+
+def get_key_phrases(conversation):
+  last_post = conversation.last()
+  r = Rake()
+  phrases = []
+  content = last_post.post.content
+  if content:
+    r.extract_keywords_from_text(content)
+    # TODO Filter further
+    phrases = r.get_ranked_phrases()
+
+  return phrases
+
+
+def generate_response_with_key_phrases(key_phrases, bot_1, bot_2):
+  if not len(key_phrases):
+    return 'first post'
+  #  Will map key phrase to list of tweets that contain one of those phrases or a synonym
+  #  Search for tweets that contain the given key phrase or a synonym
+  #  Searh the bot_1's tweets for something with that phrase
+  key_phrase_match_map = defaultdict(list)
+  for tweet in bot_1.twitterpost_set.all():
+    for phrase in key_phrases:
+      if phrase in tweet.content:
+        key_phrase_match_map[phrase].append(tweet.content)
+      for synset in wn.synsets(phrase):
+        for lemma in synset.lemmas():
+          if lemma.name() in tweet.content:
+            key_phrase_match_map[lemma.name()].append(tweet.content)
+
+  for k, v in key_phrase_match_map.iteritems():
+    print 'KEY'
+    print k
+    print 'V'
+    print v
+
+  return 'STUB'
+
+
+def get_web_text_response(conversation_posts):
+  """
+  Use nltk's webtext to get a response then twitter-fy it
+  """
+  firefox_raw = webtext.raw(u'overheard.txt')
+  print type(firefox_raw)
+  print firefox_raw
+  print firefox_raw[:100]
+  return 'STUB'
 
 
 def add_message_to_group_convo(bot_username, message, conversation_name):
