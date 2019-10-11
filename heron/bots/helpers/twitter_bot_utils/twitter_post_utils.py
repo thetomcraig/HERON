@@ -6,6 +6,13 @@ def create_post_cache(words, cache_set):
   """
   Create the postcache item from the new post
   to be used to make the markov post
+  For example:
+    words = "The quick brown fox jumped"
+  Will become:
+    TwitterPostCache(The, quick, brown, beginning=True)
+    TwitterPostCache(quick, brown, fox, beginning=False)
+    TwitterPostCache(brown, fox, jumped, beginning=False)
+
   """
   word_list = words.split()
   for index in range(len(word_list) - 2):

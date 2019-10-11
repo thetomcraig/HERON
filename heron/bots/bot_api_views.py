@@ -10,19 +10,8 @@ from bots.helpers.twitter_bot_utils.emotion_utils import (
 from bots.helpers.twitter_bot_utils.crud_utils import (
     clear_twitter_bot,
     get_all_twitter_bots,
-    get_twitter_bot_info
-)
-from bots.helpers.twitter_bot_utils.conversation_utils import (
-    add_to_twitter_conversation,
-    clear_all_twitter_conversations,
-    clear_twitter_conversation,
-    create_markov_post,
-    get_or_create_conversation_json,
-    add_message_to_group_convo,
-    get_group_conversation_json)
-from bots.helpers.twitter_bot_utils.scraping_utils import (
-    scrape,
-    scrape_all_twitter_bots,
+    get_twitter_bot_info,
+    create_twitter_bots_for_top_users,
 )
 from bots.helpers.twitter_getters import (
     catalog_tweet_replies,
@@ -32,7 +21,12 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 
-def get_all_bots(limit=None):
+def create_top_bots(request, limit=None):
+  success, all_bot_data = create_twitter_bots_for_top_users()
+  return JsonResponse({'success': str(success), 'data': all_bot_data})
+
+
+def get_all_bots(request, limit=None):
   success, all_bot_data = get_all_twitter_bots()
   return JsonResponse({'success': str(success), 'data': all_bot_data})
 
@@ -40,19 +34,6 @@ def get_all_bots(limit=None):
 def get_bot(request, username):
   data = get_twitter_bot_info(username)
   return JsonResponse({'success': str(True), 'data': data})
-
-
-def scrape_bot(request, username):
-  response_data = scrape(username)
-  return JsonResponse(response_data)
-
-
-def scrape_all_bots(request):
-  """
-  'people_dict' contains all the data for the updates TwitterBots
-  """
-  success, people_dict = scrape_all_twitter_bots()
-  return JsonResponse({'success': str(success), 'data': str(people_dict)})
 
 
 def clear_bot_tweets(request, username):
@@ -88,44 +69,6 @@ def create_post(request, bot_id):
   return JsonResponse({'new post': new_markov_post})
 
 
-def get_conversation(request, bot1_username, bot2_username):
-  conversation_json = get_or_create_conversation_json(
-      bot1_username, bot2_username)
-  return JsonResponse(conversation_json)
-
-
-@csrf_exempt
-def get_group_conversation(request):
-  body = json.loads(request.body)
-  conversation_name = body.get('conversation_name')
-  json_data = get_group_conversation_json(conversation_name)
-  return JsonResponse(json_data)
-
-
-@csrf_exempt
-def update_conversation(request):
-  """
-  Given two conversation partners, make a new post for whomever is next
-  """
-  body = json.loads(request.body)
-  author = body.get('author')
-  partner = body.get('partner')
-  post_number = body.get('post_number', 1)
-  new_post_json = add_to_twitter_conversation(
-      author, partner, post_number=post_number)
-  return JsonResponse(new_post_json)
-
-
-@csrf_exempt
-def update_group_conversation(request):
-  body = json.loads(request.body.decode('utf-8'))
-  username = body.get('username')
-  message = body.get('message')
-  conversation_name = body.get('conversation_name')
-  content = add_message_to_group_convo(username, message, conversation_name)
-  return JsonResponse({'success': 'true', 'content': content})
-
-
 @csrf_exempt
 def update_emotion_bot(request):
   """
@@ -143,13 +86,3 @@ def update_emotion_bot(request):
   body = json.loads(request.body)
   new_tweets = add_new_tweets_to_emotion_bot(body)
   return JsonResponse({'new_tweets': new_tweets})
-
-
-def clear_conversation(request, bot1_username, bot2_username):
-  clear_twitter_conversation(bot1_username, bot2_username)
-  return JsonResponse({'success': 'true'})
-
-
-def clear_all_conversations(request, bot_id):
-  clear_all_twitter_conversations(bot_id)
-  return JsonResponse({'success': 'true'})
