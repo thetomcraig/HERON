@@ -6,9 +6,9 @@ from django.conf import settings
 import random
 from bots.helpers.watson_utils import interpret_watson_keywords_and_entities
 from .state_manager import initialize_conversation_sate, add_bot_to_conversation_state
-from bots.helpers.twitter_bot_utils import add_message_to_group_convo
+#from bots.helpers.twitter_bot_utils import add_message_to_group_convo
 from bots.models.twitter import TwitterConversation, TwitterBot, TwitterPost
-from bots.helpers.utils import create_post_cache, replace_tokens
+#  from bots.helpers.utils import create_post_cache, replace_tokens
 
 from django.http import JsonResponse
 
