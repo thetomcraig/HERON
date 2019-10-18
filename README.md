@@ -37,11 +37,11 @@ They are also "pluggable"; it is easy to create a network of bots that communica
       * After the new mesages are craeted, the Dispatcher sends them to the server to be viewed.   
       
 
+
 ### Sources/Credits
 
-### Liscence and sources:
 #### Liscense
 MIT
-### Inspiration and sources
+#### Credits
 Research Machines plc. (2004). The Hutchinson dictionary of scientific biography.  
 https://heronrobots.com
