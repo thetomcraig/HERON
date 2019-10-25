@@ -1,9 +1,8 @@
 # HERON
 <p align="center">
-    <img src="https://github.com/thetomcraig/HERON/blob/master/docs/Hero_of_Alexandria.png" width="128" align="middle">
+    <img src="images/h.png" width="64" align="middle">
 </p>
 
-## What is this
 HERON is a  library capabile of easily instantiating and deploying an AI botnet
 This library provides simple chat bots which use machine learning to iterate on their source material (twitter, etc)
 They are also "pluggable"; it is easy to create a network of bots that communicate with one another 
