@@ -28,8 +28,8 @@ def scrape_twitter_bot(bot):
 
   tweets = t.get_tweets_from_user(bot.username, 100)
 
-  response_data['new tweets'] = len(tweets)
-  response_data['tweets'] = {}
+  response_data['num_new_tweets'] = len(tweets)
+  response_data['new_tweets'] = {}
 
   idx = 0
   for tweet_id, tweet in tweets.iteritems():
@@ -43,7 +43,7 @@ def scrape_twitter_bot(bot):
       if "#" in word:
         bot.twitterhashtag_set.create(content=word)
 
-    response_data['tweets'][idx] = str(tweet)
+    response_data['new_tweets'][idx] = str(tweet)
 
     h = HTMLParser.HTMLParser()
     tweet = h.unescape(tweet.decode('utf-8'))
@@ -73,6 +73,6 @@ def scrape_all_twitter_bots():
 def scrape(username):
   bot = TwitterBot.objects.get(username=username)
   scrape_response = scrape_twitter_bot(bot)
-  data = {'success': True, 'new tweets': scrape_response['new tweets'], 'tweets':
-          scrape_response['tweets']}
+  data = {'success': True, 'new tweets': scrape_response['new_tweets'], 'num_new_tweets':
+          scrape_response['num_new_tweets']}
   return data

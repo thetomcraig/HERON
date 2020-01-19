@@ -1,6 +1,7 @@
 import random
 from django.db import models
 
+
 class Bot(models.Model):
   real_name = models.CharField(max_length=1000, default='PLACEHOLDER')
   first_name = models.CharField(max_length=1000, default='PLACEHOLDER')
@@ -95,7 +96,14 @@ class MarkovChain(models.Model):
 class SentenceCache(models.Model):
   """
   Used to cache words from the original posts
-  the markov posts uses these
+  to be used to make the markov post
+
+  For example:
+    words = "The quick brown fox jumped"
+  Will become:
+    SentenceCache(The, quick, brown, beginning=True)
+    SentenceCache(quick, brown, fox, beginning=False)
+    SentenceCache(brown, fox, jumped, beginning=False)
   """
   class Meta:
     abstract = True

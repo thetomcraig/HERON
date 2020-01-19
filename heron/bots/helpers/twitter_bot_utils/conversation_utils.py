@@ -122,7 +122,7 @@ def add_single_post_to_twitter_conversation(conversation_id, index, next_speaker
   """
   Given a conversation ID, grab all the posts in the conversation and sort them
   Then generate the text of a new post
-  Then make a ne post
+  Then make a new post object
   """
   conversation = TwitterConversation.objects.get(id=conversation_id)
   sorted_conversation_posts = conversation.twitterconversationpost_set.order_by('index').all()
@@ -162,6 +162,8 @@ def add_posts_to_twitter_conversation(bot1_username, bot2_username, post_number=
     Get the next speaker
     Generate the new ConversationPost object
   """
+  newly_created_posts = []
+
   conversation = get_or_create_conversation(bot1_username, bot2_username)
   sorted_conversation_posts = conversation.twitterconversationpost_set.order_by('index').all()
 
@@ -173,12 +175,13 @@ def add_posts_to_twitter_conversation(bot1_username, bot2_username, post_number=
                                                                  conversation.author,
                                                                  conversation.partner)
   for _ in range(post_number):
-    add_single_post_to_twitter_conversation(conversation.id, index, next_speaker)
+    new_post = add_single_post_to_twitter_conversation(conversation.id, index, next_speaker)
+    newly_created_posts.append(newly_created_posts)
 
     # Switch the speakers
     last_speaker, next_speaker = next_speaker, last_speaker
     index += 1
-  return True
+  return newly_created_posts
 
 # ALL TESTING BELOW THIS
 
