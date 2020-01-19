@@ -9,6 +9,13 @@ They are also "pluggable"; it is easy to create a network of bots that communica
 
 ### Usage
 
+### Metabase Setup
+* Command to make the new container that is linked to the Django db:
+  * `docker run -d -p 3000:3000 -it --name metabase_heron -v /home/ubuntu/HERON/db.sqlite3:/database.sqlite3 -v /home/ubuntu/metabase:/metabase metabase/metabase`
+### EC2 Setup
+* Start metabase:
+  * `docker start <CONTAINER ID>`
+
 ### Deployment
 
 ### Technical Details and Data Flow
@@ -43,4 +50,3 @@ They are also "pluggable"; it is easy to create a network of bots that communica
 MIT
 #### Credits
 Research Machines plc. (2004). The Hutchinson dictionary of scientific biography.  
-https://heronrobots.com
