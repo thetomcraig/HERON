@@ -73,6 +73,6 @@ def scrape_all_twitter_bots():
 def scrape(username):
   bot = TwitterBot.objects.get(username=username)
   scrape_response = scrape_twitter_bot(bot)
-  data = {'success': True, 'new tweets': scrape_response['new tweets'], 'tweets':
-          scrape_response['tweets']}
+  data = {'success': True, 'new tweets': scrape_response['new_tweets'], 'num_new_tweets':
+          scrape_response['num_new_tweets']}
   return data
