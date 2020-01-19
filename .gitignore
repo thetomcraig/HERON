@@ -107,3 +107,4 @@ ENV/
 
 tags
 db.sqlite3
+heron/db.sqlite3
