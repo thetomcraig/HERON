@@ -8,7 +8,7 @@ from bots.helpers.twitter_bot_utils.conversation_utils import (
     clear_all_twitter_conversations,
     clear_twitter_conversation,
     create_markov_post,
-    get_or_create_conversation,
+    get_full_conversation_as_json,
     add_message_to_group_convo,
     get_group_conversation_json)
 from django.http import JsonResponse
@@ -21,16 +21,7 @@ def create_post(request, bot_id):
 
 
 def get_conversation(request, bot1_username, bot2_username):
-  conversation = get_or_create_conversation(bot1_username, bot2_username)
-  conversation_json = {'id': conversation.id,
-                       'bot1': conversation.author.username,
-                       'bot2': conversation.partner.username,
-                       'posts': {}
-                       }
-  for _, conv_post in enumerate(conversation.twitterconversationpost_set.all()):
-    conversation_json['posts'][conv_post.index] = \
-        {conv_post.author.username + ": ": conv_post.post.content}
-
+  conversation_json = get_full_conversation_as_json(bot1_username, bot2_username)
   return JsonResponse(conversation_json)
 
 

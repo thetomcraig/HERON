@@ -32,7 +32,20 @@ def get_or_create_conversation(bot1_username, bot2_username):
   return conversation
 
 
+def get_full_conversation_as_json(bot1_username, bot2_username):
+  conversation = get_or_create_conversation(bot1_username, bot2_username)
+  conversation_json = {'id': conversation.id,
+                       'bot1': conversation.author.username,
+                       'bot2': conversation.partner.username,
+                       'posts': {}
+                       }
+  for _, conv_post in enumerate(conversation.twitterconversationpost_set.all()):
+    conversation_json['posts'][conv_post.index] = {conv_post.author.username + ": ": conv_post.post.content}
+  return conversation_json
+
+
 def get_group_conversation_json(conversation_name):
+  # TODO, move group stuff elsewhere
   conversation = TwitterConversation.objects.get_or_create(name=conversation_name)[0]
   conversation_json = {}
   for conv_post in conversation.twitterconversationpost_set.all():

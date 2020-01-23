@@ -97,19 +97,22 @@ def clear_twitter_bot(username):
   return True
 
 
-def get_twitter_bot_info(username):
+def get_twitter_bot_info(username, include_posts=False):
   bot = get_twitter_bot(username)
-  real_posts = {x.id: x.content for x in bot.twitterpost_set.all()}
-  fake_posts = {x.id: x.content for x in bot.twitterpostmarkov_set.all()}
   bot_data = {
       'real_name': bot.real_name,
       'first_name': bot.first_name,
       'last_name': bot.last_name,
       'username': bot.username,
       'avatar': bot.avatar,
-      'real posts': real_posts,
-      'fake posts': fake_posts,
   }
+
+  if include_posts:
+    real_posts = {x.id: x.content for x in bot.twitterpost_set.all()}
+    fake_posts = {x.id: x.content for x in bot.twitterpostmarkov_set.all()}
+    bot_data['real posts'] = real_posts
+    bot_data['fake posts'] = fake_posts
+
   return bot_data
 
 
