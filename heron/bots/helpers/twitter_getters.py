@@ -3,6 +3,7 @@ Utilities for getting tweets on a more granular level
 Functions can control the way in which reply chains are parsed,
 and return tweets and replys that march specific critera
 """
+# TODO, this should be moved under the "twitter aspi interface" umbrella
 import mechanize
 from bots.models.twitter import TwitterBot, TwitterPost
 from bs4 import BeautifulSoup
