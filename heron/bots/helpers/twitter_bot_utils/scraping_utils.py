@@ -5,6 +5,7 @@ TwitterBots created and updated mostly using the Tweepy API, via TwitterApiInter
 from .twitter_post_utils import create_post_cache
 import HTMLParser
 from bots.helpers.twitter_api_interface import TwitterApiInterface
+from bots.helpers.twitter_bot_utils.crud_utils import get_twitter_bot
 from bots.models.twitter import TwitterBot, TwitterPost
 from django.conf import settings
 
@@ -71,14 +72,10 @@ def scrape_all_twitter_bots():
 
 
 def scrape(username):
-  if not username:
-    return {'success': False}
+  bot = get_twitter_bot(username)
+  if not bot:
+    return {'success': False, 'msg': 'Not bot found with username: "{}"'.format(username)}
 
-  # If the @ symbol was included, strip it
-  if username[0] == '@':
-    username = username[1:]
-
-  bot = TwitterBot.objects.get(username=username)
   scrape_response = scrape_twitter_bot(bot)
   data = {'success': True,
           'new tweets': scrape_response['new_tweets'],

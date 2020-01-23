@@ -2,6 +2,8 @@
 Utilities for getting data directly from twitter
 Uses Tweepy for getting tweets and trends
 Uses mechanize+BeautifulSoup to get reply chains and top users
+
+This file uses the "person" convention, because it provides REAL data from REAL twitter accounts
 """
 import mechanize
 import tweepy
@@ -38,6 +40,10 @@ class TwitterApiInterface:
     raw_html = BeautifulSoup(html, "html.parser")
     browser.close()
     return raw_html
+
+  def find_user(self, username):
+    user = self.tweepy_api.get_user(screen_name=username)
+    return {'name': user.name, 'username': user.screen_name, 'avatar': None}
 
   def find_top_users(self):
     """

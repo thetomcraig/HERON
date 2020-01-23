@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from bots.helpers.twitter_bot_utils.conversation_utils import add_posts_to_twitter_conversation
 
-NUM_NEW_POSTS = 1
+NUM_NEW_POSTS = 10
 
 
 class Command(BaseCommand):
