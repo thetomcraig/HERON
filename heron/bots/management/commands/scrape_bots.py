@@ -14,7 +14,6 @@ class Command(BaseCommand):
 
     for username in usernames:
       print('Scraping "{}"'.format(username))
-      # Print this to debug:
       response = scrape(username)
       if response.get('success'):
         print('Success')
