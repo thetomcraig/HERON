@@ -10,53 +10,56 @@ from bots.helpers.twitter_bot_utils.conversation_utils import (
     create_markov_post,
     get_full_conversation_as_json,
     add_message_to_group_convo,
-    get_group_conversation_json)
+    get_group_conversation_json,
+)
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 
 def create_post(request, bot_id):
-  new_markov_post = create_markov_post(bot_id)
-  return JsonResponse({'new post': new_markov_post})
+    new_markov_post = create_markov_post(bot_id)
+    return JsonResponse({"new post": new_markov_post})
 
 
 def get_conversation(request, bot1_username, bot2_username):
-  conversation_json = get_full_conversation_as_json(bot1_username, bot2_username)
-  return JsonResponse(conversation_json)
+    conversation_json = get_full_conversation_as_json(bot1_username, bot2_username)
+    return JsonResponse(conversation_json)
 
 
 def update_conversation(request, bot1_username, bot2_username, post_number):
-  """
+    """
   Given two conversation partners, make a new post for whomever is next
   """
-  add_posts_to_twitter_conversation(bot1_username, bot2_username, post_number=int(post_number))
+    add_posts_to_twitter_conversation(
+        bot1_username, bot2_username, post_number=int(post_number)
+    )
 
-  return get_conversation(request, bot1_username, bot2_username)
+    return get_conversation(request, bot1_username, bot2_username)
 
 
 def clear_conversation(request, bot1_username, bot2_username):
-  clear_twitter_conversation(bot1_username, bot2_username)
-  return JsonResponse({'success': 'true'})
+    clear_twitter_conversation(bot1_username, bot2_username)
+    return JsonResponse({"success": "true"})
 
 
 def clear_all_conversations(request, bot_id):
-  clear_all_twitter_conversations(bot_id)
-  return JsonResponse({'success': 'true'})
+    clear_all_twitter_conversations(bot_id)
+    return JsonResponse({"success": "true"})
 
 
 @csrf_exempt
 def get_group_conversation(request):
-  body = json.loads(request.body)
-  conversation_name = body.get('conversation_name')
-  json_data = get_group_conversation_json(conversation_name)
-  return JsonResponse(json_data)
+    body = json.loads(request.body)
+    conversation_name = body.get("conversation_name")
+    json_data = get_group_conversation_json(conversation_name)
+    return JsonResponse(json_data)
 
 
 @csrf_exempt
 def update_group_conversation(request):
-  body = json.loads(request.body.decode('utf-8'))
-  username = body.get('username')
-  message = body.get('message')
-  conversation_name = body.get('conversation_name')
-  content = add_message_to_group_convo(username, message, conversation_name)
-  return JsonResponse({'success': 'true', 'content': content})
+    body = json.loads(request.body.decode("utf-8"))
+    username = body.get("username")
+    message = body.get("message")
+    conversation_name = body.get("conversation_name")
+    content = add_message_to_group_convo(username, message, conversation_name)
+    return JsonResponse({"success": "true", "content": content})

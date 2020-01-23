@@ -5,14 +5,13 @@ import base
 
 
 class TwitterBot(base.Bot):
-
     def __str__(self):
         return self.username
 
 
 class TwitterPost(base.Sentence):
     author = models.ForeignKey(TwitterBot, default=None, null=True)
-    emotion = models.CharField(max_length=1000, default='PLACEHOLDER', null=True)
+    emotion = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
     tweet_id = models.IntegerField(null=True)
 
 
@@ -26,7 +25,7 @@ class TwitterPostMarkov(base.MarkovChain):
 
 class TwitterLink(models.Model):
     author = models.ForeignKey(TwitterBot)
-    content = models.CharField(max_length=1000, default='PLACEHOLDER', null=True)
+    content = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
 
     def __str__(self):
         return self.content
@@ -34,7 +33,7 @@ class TwitterLink(models.Model):
 
 class TwitterHashtag(models.Model):
     author = models.ForeignKey(TwitterBot)
-    content = models.CharField(max_length=1000, default='PLACEHOLDER', null=True)
+    content = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
 
     def __str__(self):
         return self.content
@@ -42,15 +41,15 @@ class TwitterHashtag(models.Model):
 
 class TwitterMention(models.Model):
     author = models.ForeignKey(TwitterBot)
-    content = models.CharField(max_length=1000, default='PLACEHOLDER', null=True)
+    content = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
 
     def __str__(self):
         return self.content
 
 
 class TwitterConversation(models.Model):
-    name = models.CharField(max_length=1000, default='PLACEHOLDER')
-    author = models.ForeignKey(TwitterBot, related_name='author', null=True)
+    name = models.CharField(max_length=1000, default="PLACEHOLDER")
+    author = models.ForeignKey(TwitterBot, related_name="author", null=True)
     partner = models.ForeignKey(TwitterBot, null=True)
 
 

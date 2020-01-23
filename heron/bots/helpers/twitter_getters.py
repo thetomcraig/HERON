@@ -19,16 +19,16 @@ def get_tweet_replies(username, tweet_id):
         replies to that tweet
     """
     browser = mechanize.Browser()
-    ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 (compatible;)'
-    browser.addheaders = [('User-Agent', ua), ('Accept', '*/*')]
+    ua = "Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 (compatible;)"
+    browser.addheaders = [("User-Agent", ua), ("Accept", "*/*")]
 
-    url = 'https://twitter.com/{0}/status/{1}'.format(username, tweet_id)
+    url = "https://twitter.com/{0}/status/{1}".format(username, tweet_id)
     browser.open(url)
 
-    html = browser.response().read().decode('utf-8', 'ignore')
+    html = browser.response().read().decode("utf-8", "ignore")
     raw = BeautifulSoup(html, "html.parser")
-    replies_div = raw.find('div', class_='replies-to')
-    replies = replies_div.find_all('div', class_='ThreadedConversation-tweet')
+    replies_div = raw.find("div", class_="replies-to")
+    replies = replies_div.find_all("div", class_="ThreadedConversation-tweet")
 
     # If there are no replies, stop
     if not replies:
@@ -36,18 +36,18 @@ def get_tweet_replies(username, tweet_id):
 
     all_tweets = []
     for reply in replies:
-        tweets = reply.find_all('div', class_='tweet')
+        tweets = reply.find_all("div", class_="tweet")
         all_tweets.extend(tweets)
 
     all_responses = {}
     for tweet in all_tweets:
-        content = tweet.find_all('div', class_='content')[0]
-        inner_content = content.find_all('div', class_='js-tweet-text-container')[0]
-        text = inner_content.find('p')
+        content = tweet.find_all("div", class_="content")[0]
+        inner_content = content.find_all("div", class_="js-tweet-text-container")[0]
+        text = inner_content.find("p")
 
-        screen_name = tweet['data-screen-name']
-        tweet_id = tweet['data-tweet-id']
-        all_responses[tweet_id] = {'author': screen_name, 'content': text.text}
+        screen_name = tweet["data-screen-name"]
+        tweet_id = tweet["data-tweet-id"]
+        all_responses[tweet_id] = {"author": screen_name, "content": text.text}
 
     # Need to remove duplicates here, same tweets show up with the same id...
     # WAIT, this seems to actually be legitimate... should it be deduped
@@ -68,10 +68,10 @@ def get_all_replies(username, tweet_id, max_iterations=None):
                         }
             }
     """
-    print 'calling get_all_replies with {}'.format(tweet_id)
+    print "calling get_all_replies with {}".format(tweet_id)
     replies = {}
     all_responses = get_tweet_replies(username, tweet_id)
-    print 'got responses: {}'.format(all_responses)
+    print "got responses: {}".format(all_responses)
 
     if len(all_responses) == 0:
         return replies
@@ -82,9 +82,12 @@ def get_all_replies(username, tweet_id, max_iterations=None):
             if iterations > max_iterations:
                 return replies
 
-        print 'initiate call for {}'.format(reply_id)
-        replies[reply_id] = {'author': response_data['author'], 'content': response_data['content'], 'replies':
-                             get_all_replies(username, reply_id)}
+        print "initiate call for {}".format(reply_id)
+        replies[reply_id] = {
+            "author": response_data["author"],
+            "content": response_data["content"],
+            "replies": get_all_replies(username, reply_id),
+        }
         iterations = iterations + 1
 
     return replies
@@ -105,7 +108,7 @@ def single_reply(username, tweet_id):
     """
     replies = {}
     all_responses = get_tweet_replies(username, tweet_id)
-    print 'all responses'
+    print "all responses"
     print all_responses
 
     if len(all_responses) == 0:
@@ -115,19 +118,27 @@ def single_reply(username, tweet_id):
     reply_id = all_responses.keys()[0]
     response_data = all_responses[reply_id]
 
-    replies[reply_id] = {'author': response_data['author'], 'content': response_data['content'], 'replies': {}}
+    replies[reply_id] = {
+        "author": response_data["author"],
+        "content": response_data["content"],
+        "replies": {},
+    }
 
-    overarching_emotion, keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(response_data[
-                                                                                                            'content'])
-    replies[reply_id].update({'keyword_data': keywords_list})
-    replies[reply_id].update({'entities_data': entities_list})
-    replies[reply_id].update({'overarching_emotion': overarching_emotion})
+    (
+        overarching_emotion,
+        keywords_list,
+        entities_list,
+    ) = watson_utils.interpret_watson_keywords_and_entities(response_data["content"])
+    replies[reply_id].update({"keyword_data": keywords_list})
+    replies[reply_id].update({"entities_data": entities_list})
+    replies[reply_id].update({"overarching_emotion": overarching_emotion})
 
     return replies
 
 
-def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scrape_mode='all', threshold=1,
-                                                                   max_response_number=5):
+def get_tweets_over_reply_threshold_and_analyze_text_understanding(
+    username, scrape_mode="all", threshold=1, max_response_number=5
+):
     """
     Input:
         twitter username
@@ -138,9 +149,9 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
         each reply will have NLP analytics attached from the watson API
     """
     # Decide what function we want to scrape with
-    if scrape_mode == 'all':
+    if scrape_mode == "all":
         reply_function = get_all_replies
-    elif scrape_mode == 'single_reply':
+    elif scrape_mode == "single_reply":
         reply_function = single_reply
     else:
         reply_function = None
@@ -156,15 +167,22 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(username, scr
         reply_data = get_tweet_replies(username, tweet.tweet_id)
         num_replies = len(reply_data)
         if num_replies >= threshold:
-            print('lots of replies; analyzing')
-            overarching_emotion, keywords_list, entities_list = watson_utils.interpret_watson_keywords_and_entities(
-                tweet.content)
-            tweets_over_threshold[tweet.tweet_id] = {'keyword_data': keywords_list,
-                                                     'entities_data': entities_list,
-                                                     'content': tweet.content,
-                                                     'overarching_emotion': overarching_emotion}
-            print('recursing')
-            tweets_over_threshold[tweet.tweet_id].update({'replies': reply_function(username, tweet.tweet_id)})
+            print ("lots of replies; analyzing")
+            (
+                overarching_emotion,
+                keywords_list,
+                entities_list,
+            ) = watson_utils.interpret_watson_keywords_and_entities(tweet.content)
+            tweets_over_threshold[tweet.tweet_id] = {
+                "keyword_data": keywords_list,
+                "entities_data": entities_list,
+                "content": tweet.content,
+                "overarching_emotion": overarching_emotion,
+            }
+            print ("recursing")
+            tweets_over_threshold[tweet.tweet_id].update(
+                {"replies": reply_function(username, tweet.tweet_id)}
+            )
 
             if len(tweets_over_threshold.keys()) >= max_response_number:
                 return tweets_over_threshold
@@ -191,13 +209,15 @@ def catalog_tweet_replies(tweets_over_threshold):
     Grab all of the twitter bots that correspond to the emotions the watson API returns
     """
     for tweetid, tweet_data in tweets_over_threshold.iteritems():
-        for reply_id, reply_data in tweet_data['replies'].iteritems():
-            overarching_emotion = reply_data['overarching_emotion']
-            reply_username = reply_data['author']
+        for reply_id, reply_data in tweet_data["replies"].iteritems():
+            overarching_emotion = reply_data["overarching_emotion"]
+            reply_username = reply_data["author"]
             reply_author = TwitterBot.objects.get_or_create(username=reply_username)[0]
-            TwitterPost.objects.create(tweet_id=reply_id,
-                                       author=reply_author,
-                                       content=reply_data['content'],
-                                       emotion=overarching_emotion)
+            TwitterPost.objects.create(
+                tweet_id=reply_id,
+                author=reply_author,
+                content=reply_data["content"],
+                emotion=overarching_emotion,
+            )
 
     # With this done; logic to group together the tweets with the same emotions and do markov chains
