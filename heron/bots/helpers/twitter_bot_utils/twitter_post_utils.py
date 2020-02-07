@@ -22,6 +22,8 @@ def process_new_tweet(bot, tweet_id, tweet):
     #  Loop over every word and for each:
     #  If word is a mention/link/hashtag, created the necessary object, and replace it with a token
     words = tweet.split()
+    is_retweet = words[0].startswith("RT")
+
     tokenized_words = []
     for word in words:
         if word.startswith("@"):
@@ -39,7 +41,7 @@ def process_new_tweet(bot, tweet_id, tweet):
     logging.debug("{} => {}".format(tweet, tokenized_tweet))
     # Make a post object with the tokenized tweet
     post = TwitterPost.objects.create(
-        author=bot, content=tokenized_tweet, tweet_id=tweet_id
+        author=bot, content=tokenized_tweet, tweet_id=tweet_id, retweet=is_retweet
     )
     # Create necessary cache objects
     create_post_cache(post.content, bot.twitterpostcache_set)
