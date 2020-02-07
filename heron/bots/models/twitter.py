@@ -13,6 +13,7 @@ class TwitterPost(base.Sentence):
     author = models.ForeignKey(TwitterBot, default=None, null=True)
     emotion = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
     tweet_id = models.IntegerField(null=True)
+    retweet = models.BooleanField(default=False)
 
 
 class TwitterPostCache(base.SentenceCache):

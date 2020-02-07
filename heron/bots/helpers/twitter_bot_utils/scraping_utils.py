@@ -2,24 +2,20 @@
 Very general utilities for working with twitter bots
 TwitterBots created and updated mostly using the Tweepy API, via TwitterApiInterface
 """
-from .twitter_post_utils import create_post_cache
 import HTMLParser
 from bots.helpers.twitter_api_interface import TwitterApiInterface
 from bots.helpers.twitter_bot_utils.crud_utils import get_twitter_bot
-from bots.models.twitter import TwitterBot, TwitterPost
+from bots.helpers.twitter_bot_utils.twitter_post_utils import process_new_tweets
+from bots.models.twitter import TwitterBot
 from django.conf import settings
 
 
 def scrape_twitter_bot(bot):
     """
-  Scrape the given user with tweepy
-  take all of their tweets and
-  turn them into TwitterPost objects
-  strip out uncommon words (links, hashtags, users)
-  and save them seperately in instances, then
-  replace with dummy words.
-  """
-    response_data = {}
+    Scrape the given user with tweepy
+    Clean up all of their tweets and process them
+    """
+    response_data = {"success": False}
 
     t = TwitterApiInterface(
         settings.TWEEPY_CONSUMER_KEY,
@@ -31,37 +27,29 @@ def scrape_twitter_bot(bot):
     tweets = t.get_tweets_from_user(bot.username, 100)
 
     response_data["num_new_tweets"] = len(tweets)
-    response_data["new_tweets"] = {}
+    response_data["new_tweets"] = {
+        idx: tweet for (idx, tweet) in enumerate(tweets.values)
+    }
 
-    idx = 0
-    for tweet_id, tweet in tweets.iteritems():
+    # Clean up the tweets to be used to make db objects
+    cleaned_tweets = {}
+    parser = HTMLParser.HTMLParser()
+    for idx, tweet in tweets.iteritems():
+        # Put clean text in the db
+        clean_tweet = parser.unescape(tweet.decode("utf-8"))
+        cleaned_tweets[idx] = clean_tweet
 
-        words = tweet.split()
-        for word in words:
-            if "@" in word:
-                bot.twittermention_set.create(content=word)
-            if "http" in word:
-                bot.twitterlink_set.create(content=word)
-            if "#" in word:
-                bot.twitterhashtag_set.create(content=word)
+    process_new_tweets(bot, cleaned_tweets)
 
-        response_data["new_tweets"][idx] = str(tweet)
-
-        h = HTMLParser.HTMLParser()
-        tweet = h.unescape(tweet.decode("utf-8"))
-
-        post = TwitterPost.objects.create(author=bot, content=tweet, tweet_id=tweet_id)
-
-        create_post_cache(post.content, bot.twitterpostcache_set)
-        idx += 1
+    response_data["success"] = True
 
     return response_data
 
 
 def scrape_all_twitter_bots():
     """
-  WARNING this can cause rate limit-related errors
-  """
+    WARNING this can cause rate limit-related errors
+    """
     all_twitter_bots = TwitterBot.objects.all()
 
     response_data = {}
