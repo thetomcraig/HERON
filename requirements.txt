@@ -7,7 +7,7 @@ cffi==1.11.4
 chardet==3.0.4
 configparser==3.5.0
 cryptography==2.1.4
-Django==1.11.6
+Django==1.11.28
 djangorestframework==3.7.0
 enum34==1.1.6
 flake8==3.5.0
