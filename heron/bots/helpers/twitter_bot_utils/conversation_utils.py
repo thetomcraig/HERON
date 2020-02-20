@@ -185,12 +185,12 @@ def add_single_post_to_twitter_conversation(conversation_id, index, next_speaker
 
 def add_posts_to_twitter_conversation(bot1_username, bot2_username, post_number=1):
     """
-  First we sort the conversation query dict by index
-  Then, repeatedly:
-    Get the index for the new post
-    Get the next speaker
-    Generate the new ConversationPost object
-  """
+    First we sort the conversation query dict by index
+    Then, repeatedly:
+        Get the index for the new post
+        Get the next speaker
+        Generate the new ConversationPost object
+    """
     newly_created_posts = []
 
     conversation = get_or_create_conversation(bot1_username, bot2_username)
@@ -297,12 +297,12 @@ def add_message_to_group_convo(bot_username, message, conversation_name):
 
 def create_markov_post(bot_id):
     """
-  Takes all the words from all the twitter
-  posts on the twitterbot.
-  Sticks them all into a giant
-  list and gives this to the markov calc.
-  Save this as a new twitterpostmarkov
-  """
+    Takes all the words from all the twitter
+    posts on the twitterbot.
+    Sticks them all into a giant
+    list and gives this to the markov calc.
+    Save this as a new twitterpostmarkov
+    """
     bot = TwitterBot.objects.get(id=bot_id)
 
     all_beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
