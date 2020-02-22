@@ -10,7 +10,7 @@ from bots.models.twitter import (
 )
 from django.conf import settings
 
-from .twitter_post_utils import create_post_cache
+from .twitter_post_creation_utils import create_post_cache
 
 
 def get_or_create_conversation(bot1_username, bot2_username):
@@ -101,10 +101,9 @@ def add_single_post_to_twitter_conversation(conversation_id, index, next_speaker
     Then make a new post object
     """
     conversation = TwitterConversation.objects.get(id=conversation_id)
-    sorted_conversation_posts = conversation.twitterconversationpost_set.order_by(
+    previous_posts = conversation.twitterconversationpost_set.order_by(
         "index"
     ).all()
-    previous_posts = [x.post.content for x in sorted_conversation_posts]
 
     # If the conversation has no posts, don't bother doing anything fancy
     # To kick things off, choose a random post from the user

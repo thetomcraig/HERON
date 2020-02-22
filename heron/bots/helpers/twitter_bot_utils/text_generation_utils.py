@@ -1,14 +1,9 @@
 import random
-from .twitter_post_utils import replace_tokens
 from bots.helpers.watson_utils import interpret_watson_keywords_and_entities
 from bots.models.twitter import TwitterBot
 
 
-
-
-
-
-def markov_chain(bot_id):
+def markov_chain(bot_id, previous_posts):
     """
     Caches are triplets of consecutive words from the source
     Beginning=True means the triplet was the beinning of a messaeg
@@ -51,9 +46,12 @@ def markov_chain(bot_id):
     return " ".join(new_markov_chain)
 
 
-text_generation_utils_lookup = {"markov_chain": markov_chain}
+def template_with_sentiment_replacement(bot_id, previous_posts):
+    pass
+
+
 # TODO consolidate with this
-def replace_temp_with_watson_shit
+def replace_temp_with_watson_shit():
     new_markov_template, _ = create_markov_chain_with_caches(
         bot, all_beginning_caches, all_caches
     )
@@ -87,6 +85,8 @@ def replace_temp_with_watson_shit
     # After the replacements are done, this should somewhat realish
     reply_text = new_markov_template
     return reply_text
+
+
 def create_markov_post(bot_id):
     """
     Takes all the words from all the twitter
@@ -113,3 +113,32 @@ def create_markov_post(bot_id):
         content=content, randomness=randomness
     )
     return new_markov_post.content
+
+
+def replace_tokens(word_list_and_randomness, token, model_set):
+    """
+    Takes a list of words and replaces tokens with the
+    corresonding models linked to the user
+    """
+    word_list = word_list_and_randomness[0]
+    for word_index in range(len(word_list)):
+        if token in word_list[word_index]:
+            seed_index = 0
+            if len(model_set) > 1:
+                seed_index = random.randint(0, len(model_set) - 1)
+            try:
+                word_list[word_index] = (model_set[seed_index]).content
+                print "Replaced " + token
+
+            except IndexError:
+                print "failed to replace token:"
+                print word_list[word_index]
+
+    return (word_list, word_list_and_randomness[1])
+
+text_generation_utils_lookup = {
+    # All functions will receive "previous posts"
+    # which is the set of TwitterConversationPost objects ordered by index
+    "markov_chain": markov_chain,
+    "template_with_sentiment_replacement": template_with_sentiment_replacement,
+}

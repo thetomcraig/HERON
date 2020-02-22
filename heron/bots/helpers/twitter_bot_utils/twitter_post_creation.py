@@ -1,6 +1,5 @@
 import HTMLParser
 import logging
-import random
 from bots.models.twitter import TwitterPost, TwitterPostTemplate
 from django.conf import settings
 
@@ -21,7 +20,9 @@ def process_new_tweets(bot, tweets):
         make_twitter_post_cache(bot, post.content, bot.twitterpostcache_set)
 
         template_post = make_twitter_post_template(bot, clean_tweet, is_retweet)
-        make_twitter_post_cache(bot, template_post.content, bot.twitterposttemplatecache_set)
+        make_twitter_post_cache(
+            bot, template_post.content, bot.twitterposttemplatecache_set
+        )
 
     return True
 
@@ -99,25 +100,3 @@ def make_twitter_post_cache(words, cache_set):
             cache_set.create(
                 word1=word1, word2=word2, final_word=final_word, beginning=beginning
             )
-
-
-def replace_tokens(word_list_and_randomness, token, model_set):
-    """
-    Takes a list of words and replaces tokens with the
-    corresonding models linked to the user
-    """
-    word_list = word_list_and_randomness[0]
-    for word_index in range(len(word_list)):
-        if token in word_list[word_index]:
-            seed_index = 0
-            if len(model_set) > 1:
-                seed_index = random.randint(0, len(model_set) - 1)
-            try:
-                word_list[word_index] = (model_set[seed_index]).content
-                print "Replaced " + token
-
-            except IndexError:
-                print "failed to replace token:"
-                print word_list[word_index]
-
-    return (word_list, word_list_and_randomness[1])

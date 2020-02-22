@@ -4,7 +4,7 @@ TwitterBots created and updated mostly using the Tweepy API, via TwitterApiInter
 """
 from bots.helpers.twitter_api_interface import TwitterApiInterface
 from bots.helpers.twitter_bot_utils.crud_utils import get_twitter_bot
-from bots.helpers.twitter_bot_utils.twitter_post_utils import process_new_tweets
+from bots.helpers.twitter_bot_utils.twitter_post_creation_utils import process_new_tweets
 from bots.models.twitter import TwitterBot
 from django.conf import settings
 import logging
