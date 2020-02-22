@@ -109,6 +109,9 @@ USER_TOKEN = "<<user>>"
 LINK_TOKEN = "<<link>>"
 TAG_TOKEN = "<<tag>>"
 
+# One of: ["markov_chain"]
+TEXT_GENERATION_FUNCTION = local_settings.text_generation_function
+
 TWEEPY_CONSUMER_KEY = local_settings.tweepy_consumer_key
 TWEEPY_CONSUMER_SECRET = local_settings.tweepy_consumer_secret
 TWEEPY_ACCESS_TOKEN = local_settings.tweepy_access_token

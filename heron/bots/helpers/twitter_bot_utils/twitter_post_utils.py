@@ -1,6 +1,7 @@
+import HTMLParser
 import logging
 import random
-from bots.models.twitter import TwitterPost
+from bots.models.twitter import TwitterPost, TwitterPostTemplate
 from django.conf import settings
 
 
@@ -8,22 +9,38 @@ def process_new_tweets(bot, tweets):
     """
     Usually called with data from a Twitter API call
     """
-    logging.debug("Processing {} new tweets:".format(len(tweets)))
+    parser = HTMLParser.HTMLParser()
 
+    logging.debug("Processing {} new tweets:".format(len(tweets)))
     for tweet_id, tweet in tweets.iteritems():
-        process_new_tweet(bot, tweet_id, tweet)
+        logging.debug("Processing {}: {}".format(tweet_id, tweet))
+        clean_tweet = parser.unescape(tweet.decode("utf-8"))
+        is_retweet = tweet.startswith("RT")
+
+        post = make_twitter_post(bot, tweet_id, clean_tweet, is_retweet)
+        make_twitter_post_cache(bot, post.content, bot.twitterpostcache_set)
+
+        template_post = make_twitter_post_template(bot, clean_tweet, is_retweet)
+        make_twitter_post_cache(bot, template_post.content, bot.twitterposttemplatecache_set)
 
     return True
 
 
-def process_new_tweet(bot, tweet_id, tweet):
-    logging.debug("Processing tweet: {}: {}".format(tweet_id, tweet))
+def make_twitter_post(bot, tweet_id, tweet, is_retweet):
+    """
+    First make a TwitterPost object with this tweet
+    Then, tokenize, and make a Template object for it
+    Also, make any auxilliary objects necessary
+    """
+    post = TwitterPost.objects.create(
+        author=bot, content=tweet, tweet_id=tweet_id, retweet=is_retweet
+    )
+    logging.debug("Created TwitterPost: {}".format(tweet.encode("utf-8")))
+    return post
 
-    #  Loop over every word and for each:
-    #  If word is a mention/link/hashtag, created the necessary object, and replace it with a token
+
+def make_twitter_post_template(bot, tweet, is_retweet):
     words = tweet.split()
-    is_retweet = words[0].startswith("RT")
-
     tokenized_words = []
     for word in words:
         if word.startswith("@"):
@@ -38,18 +55,20 @@ def process_new_tweet(bot, tweet_id, tweet):
         tokenized_words.append(word)
     tokenized_tweet = " ".join(tokenized_words)
 
-    logging.debug("{} => {}".format(tweet, tokenized_tweet))
-    # Make a post object with the tokenized tweet
-    post = TwitterPost.objects.create(
-        author=bot, content=tokenized_tweet, tweet_id=tweet_id, retweet=is_retweet
+    template_post = TwitterPostTemplate.objects.create(
+        author=bot, content=tokenized_tweet, retweet=is_retweet
     )
-    # Create necessary cache objects
-    create_post_cache(post.content, bot.twitterpostcache_set)
 
-    return True
+    logging.debug(
+        "Tokenized tweet: {} => {}".format(
+            tweet.encode("utf-8"), template_post.content.encode("utf-8")
+        )
+    )
+
+    return template_post
 
 
-def create_post_cache(words, cache_set):
+def make_twitter_post_cache(words, cache_set):
     """
     Create the postcache item from the new post
     to be used to make the markov post

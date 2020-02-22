@@ -9,7 +9,21 @@ class TwitterBot(base.Bot):
         return self.username
 
 
-class TwitterPost(base.Sentence):
+class TwitterPostTemplate(base.Sentence):
+    """
+    This is a tokenized version of a real Tweet
+    """
+
+    author = models.ForeignKey(TwitterBot, default=None, null=True)
+    retweet = models.BooleanField(default=False)
+
+
+class TwitterPost(TwitterPostTemplate):
+    """
+    This is a real tweet, recorded exactly
+    If the "tweet_id" is -1, then it's not real
+    """
+
     author = models.ForeignKey(TwitterBot, default=None, null=True)
     emotion = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
     tweet_id = models.IntegerField(null=True)
@@ -17,6 +31,10 @@ class TwitterPost(base.Sentence):
 
 
 class TwitterPostCache(base.SentenceCache):
+    author = models.ForeignKey(TwitterBot, default=None, null=True)
+
+
+class TwitterPostTemplateCache(base.SentenceCache):
     author = models.ForeignKey(TwitterBot, default=None, null=True)
 
 

@@ -12,7 +12,6 @@ from integrations.helpers.twitter_bot_utils import (
     clear_all_twitter_conversations,
     scrape_twitter_person,
     add_to_twitter_conversation,
-    apply_markov_chains_twitter,
     scrape_top_twitter_people,
     update_top_twitter_people,
     get_or_create_conversation,
@@ -104,11 +103,6 @@ def twitter_person_detail(request, person_username):
     if request.GET.get("show_markov"):
         sentences_to_render = markov_sentences
 
-    if request.GET.get("generate_post"):
-        apply_markov_chains_twitter(author)
-        return HttpResponseRedirect(
-            "/integrations/twitter_person_detail/" + person_username
-        )
 
     if request.GET.get("clear_posts"):
         clear_set(author.twitterpost_set.all())
