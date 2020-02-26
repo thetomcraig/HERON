@@ -10,8 +10,6 @@ from bots.models.twitter import (
 )
 from django.conf import settings
 
-from .twitter_post_creation_utils import create_post_cache
-
 
 def get_or_create_conversation(bot1_username, bot2_username):
     bot, _ = TwitterBot.objects.get_or_create(username=bot1_username)
@@ -122,7 +120,8 @@ def add_single_post_to_twitter_conversation(conversation_id, index, next_speaker
         )
 
     new_post = next_speaker.twitterpost_set.create(tweet_id=-1, content=reply_text)
-    create_post_cache(reply_text, next_speaker.twitterpostcache_set)
+    # TODO, fix
+    #create_post_cache(reply_text, next_speaker.twitterpostcache_set)
 
     new_convo_post = TwitterConversationPost.objects.create(
         post=new_post, conversation=conversation, author=next_speaker, index=index

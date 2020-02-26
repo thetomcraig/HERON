@@ -103,6 +103,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
+LOGGING = {
+    "version": 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    "loggers": {
+        "django": {"handlers": ["console"], "level": local_settings.LOG_LEVEL},
+    },
+}
+
+
 STATIC_URL = "/static/"
 
 USER_TOKEN = "<<user>>"
@@ -126,3 +140,5 @@ WATSON_EMOTIONS = ["anger", "joy", "sadness", "fear", "disgust"]
 
 DISCORD_CONVERSATION_NAME = local_settings.discord_conversation_name
 DISCORD_CONVERSATION_STATES = local_settings.discord_conversation_states
+
+

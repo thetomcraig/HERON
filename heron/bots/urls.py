@@ -44,9 +44,4 @@ urlpatterns += [
         r"^clear_all_conversations/(?P<bot_id>[0-9]+)/$",
         conversation_api_views.clear_all_conversations,
     ),
-    url(r"^get_group_conversation/$", conversation_api_views.get_group_conversation),
-    url(
-        r"^update_group_conversation/$",
-        conversation_api_views.update_group_conversation,
-    ),
 ]

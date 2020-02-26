@@ -1,4 +1,5 @@
 # at artandlogic.com modles for comment storing)
+import logging
 from django.db import models
 
 import base
@@ -9,61 +10,58 @@ class TwitterBot(base.Bot):
         return self.username
 
 
-class TwitterPostTemplate(base.Sentence):
-    """
-    This is a tokenized version of a real Tweet
-    """
-
-    author = models.ForeignKey(TwitterBot, default=None, null=True)
-    retweet = models.BooleanField(default=False)
-
-
-class TwitterPost(TwitterPostTemplate):
+class TwitterPost(base.Sentence):
     """
     This is a real tweet, recorded exactly
     If the "tweet_id" is -1, then it's not real
     """
 
     author = models.ForeignKey(TwitterBot, default=None, null=True)
+    template = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
     emotion = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
     tweet_id = models.IntegerField(null=True)
     retweet = models.BooleanField(default=False)
 
 
-class TwitterPostCache(base.SentenceCache):
+class TwitterPostCache(models.Model):
+    cache = models.ForeignKey(base.SentenceCache, related_name="cache", default=None, null=True)
+    template_cache = models.ForeignKey(
+        base.SentenceCache, related_name="template_cache", default=None, null=True
+    )
     author = models.ForeignKey(TwitterBot, default=None, null=True)
+    beginning = models.BooleanField(default=False)
 
+    def __str__(self):
+        beginning_string = "   "
+        if self.beginning_string:
+            beginning_string = "b: "
+        return "{}, author: {}\n   cache: {}\n    template_cache: {}".format(
+            beginning_string, self.author, str(self.cache), str(self.template_cache)
+        )
 
-class TwitterPostTemplateCache(base.SentenceCache):
-    author = models.ForeignKey(TwitterBot, default=None, null=True)
+    @classmethod
+    def create(cls, beginning, cache_tuple, template_tuple):
+        cache = base.SentenceCache(beginning=beginning, *cache_tuple)
+        template_cache = base.SentenceCache(beginning=beginning, *template_tuple)
+        twitter_post_cache = cls(beginning=beginning, cache=cache, template_cache=template_cache)
+        logging.debug("Created: \n{}".format(str(cls)))
+        return twitter_post_cache
 
 
 class TwitterPostMarkov(base.MarkovChain):
     author = models.ForeignKey(TwitterBot, default=None)
 
 
-class TwitterLink(models.Model):
+class TwitterLink(base.Word):
     author = models.ForeignKey(TwitterBot)
-    content = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
-
-    def __str__(self):
-        return self.content
 
 
-class TwitterHashtag(models.Model):
+class TwitterHashtag(base.Word):
     author = models.ForeignKey(TwitterBot)
-    content = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
-
-    def __str__(self):
-        return self.content
 
 
-class TwitterMention(models.Model):
+class TwitterMention(base.Word):
     author = models.ForeignKey(TwitterBot)
-    content = models.CharField(max_length=1000, default="PLACEHOLDER", null=True)
-
-    def __str__(self):
-        return self.content
 
 
 class TwitterConversation(models.Model):

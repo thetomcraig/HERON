@@ -46,73 +46,76 @@ def markov_chain(bot_id, previous_posts):
     return " ".join(new_markov_chain)
 
 
+def markov_template_with_sentiment_replacement(bot_id, previous_posts):
+    pass
+
+
 def template_with_sentiment_replacement(bot_id, previous_posts):
     pass
 
 
-# TODO consolidate with this
-def replace_temp_with_watson_shit():
-    new_markov_template, _ = create_markov_chain_with_caches(
-        bot, all_beginning_caches, all_caches
-    )
-    # Then, use Watson API to get the keywords and entities from this template
-    _, markov_keywords, markov_entities = interpret_watson_keywords_and_entities(
-        new_markov_template
-    )
-    # Then use Watson again to get the emotion/keywords/entities
-    # of the last speaker to figure out what to say
-    # Note this is the last speaker, NOT the user corresponding to "bot_id"
-    # (maybe means adding a new user??)
-    overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(
-        previous_posts[-1]
-    )
+#  def replace_temp_with_watson_shit():
+    #  new_markov_template, _ = create_markov_chain_with_caches(
+        #  bot, all_beginning_caches, all_caches
+    #  )
+    #  # Then, use Watson API to get the keywords and entities from this template
+    #  _, markov_keywords, markov_entities = interpret_watson_keywords_and_entities(
+        #  new_markov_template
+    #  )
+    #  # Then use Watson again to get the emotion/keywords/entities
+    #  # of the last speaker to figure out what to say
+    #  # Note this is the last speaker, NOT the user corresponding to "bot_id"
+    #  # (maybe means adding a new user??)
+    #  overarching_emotion, keywords, entities = interpret_watson_keywords_and_entities(
+        #  previous_posts[-1]
+    #  )
 
-    # Now use all this data to try replacing words in the markov template
-    # with words from the last speaker's post
-    replacements = {}
-    all_watson_data_from_last_post = dict(keywords, **entities)
-    for keyword, data in all_watson_data_from_last_post.iteritems():
-        emotion = data.get("emotion")
-        for markov_keyword, markov_data in markov_keywords.iteritems():
-            markov_emotion = markov_data.get("emotion")
-            if emotion == markov_emotion:
-                replacements[markov_keyword] = keyword
+    #  # Now use all this data to try replacing words in the markov template
+    #  # with words from the last speaker's post
+    #  replacements = {}
+    #  all_watson_data_from_last_post = dict(keywords, **entities)
+    #  for keyword, data in all_watson_data_from_last_post.iteritems():
+        #  emotion = data.get("emotion")
+        #  for markov_keyword, markov_data in markov_keywords.iteritems():
+            #  markov_emotion = markov_data.get("emotion")
+            #  if emotion == markov_emotion:
+                #  replacements[markov_keyword] = keyword
 
-    # Now DO the replacements
-    for phrase, replacement in replacements.iteritems():
-        new_markov_template = new_markov_template.replace(phrase, replacement)
+    #  # Now DO the replacements
+    #  for phrase, replacement in replacements.iteritems():
+        #  new_markov_template = new_markov_template.replace(phrase, replacement)
 
-    # After the replacements are done, this should somewhat realish
-    reply_text = new_markov_template
-    return reply_text
+    #  # After the replacements are done, this should somewhat realish
+    #  reply_text = new_markov_template
+    #  return reply_text
 
 
-def create_markov_post(bot_id):
-    """
-    Takes all the words from all the twitter
-    posts on the twitterbot.
-    Sticks them all into a giant
-    list and gives this to the markov calc.
-    Save this as a new twitterpostmarkov
-    """
-    bot = TwitterBot.objects.get(id=bot_id)
+#  def create_markov_post(bot_id):
+    #  """
+    #  Takes all the words from all the twitter
+    #  posts on the twitterbot.
+    #  Sticks them all into a giant
+    #  list and gives this to the markov calc.
+    #  Save this as a new twitterpostmarkov
+    #  """
+    #  bot = TwitterBot.objects.get(id=bot_id)
 
-    all_beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
-    all_caches = bot.twitterpostcache_set.all()
-    new_markov_post = bot.apply_markov_chains_inner(all_beginning_caches, all_caches)
+    #  all_beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
+    #  all_caches = bot.twitterpostcache_set.all()
+    #  new_markov_post = bot.apply_markov_chains_inner(all_beginning_caches, all_caches)
 
-    # Replace the tokens (twitter specific)
-    replace_tokens(new_markov_post, settings.USER_TOKEN, bot.twittermention_set.all())
-    replace_tokens(new_markov_post, settings.LINK_TOKEN, bot.twitterlink_set.all())
-    replace_tokens(new_markov_post, settings.TAG_TOKEN, bot.twitterhashtag_set.all())
+    #  # Replace the tokens (twitter specific)
+    #  replace_tokens(new_markov_post, settings.USER_TOKEN, bot.twittermention_set.all())
+    #  replace_tokens(new_markov_post, settings.LINK_TOKEN, bot.twitterlink_set.all())
+    #  replace_tokens(new_markov_post, settings.TAG_TOKEN, bot.twitterhashtag_set.all())
 
-    randomness = new_markov_post[1]
-    content = " ".join(new_markov_post[0])
+    #  randomness = new_markov_post[1]
+    #  content = " ".join(new_markov_post[0])
 
-    new_markov_post = bot.twitterpostmarkov_set.create(
-        content=content, randomness=randomness
-    )
-    return new_markov_post.content
+    #  new_markov_post = bot.twitterpostmarkov_set.create(
+        #  content=content, randomness=randomness
+    #  )
+    #  return new_markov_post.content
 
 
 def replace_tokens(word_list_and_randomness, token, model_set):
@@ -135,6 +138,7 @@ def replace_tokens(word_list_and_randomness, token, model_set):
                 print word_list[word_index]
 
     return (word_list, word_list_and_randomness[1])
+
 
 text_generation_utils_lookup = {
     # All functions will receive "previous posts"
