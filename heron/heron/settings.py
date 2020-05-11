@@ -2,6 +2,7 @@ import os
 
 from heron import local_settings
 
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,7 +16,7 @@ SECRET_KEY = 't4h)8sau*-6#-tb&$x32itmfm+d!!8v@0edm0!4eteu2$q__!l'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = local_settings.ALLOWED_HOSTS
 
 
 # Application definition
@@ -129,3 +130,4 @@ WATSON_EMOTIONS = ['anger', 'joy', 'sadness', 'fear', 'disgust']
 
 DISCORD_CONVERSATION_NAME = local_settings.discord_conversation_name
 DISCORD_CONVERSATION_STATES = local_settings.discord_conversation_states
+
