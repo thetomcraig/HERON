@@ -72,9 +72,9 @@ def create_twitter_bot_from_person(username):
 def create_twitter_bots_for_top_users():
     # Change name from "user" to "person"
     """
-  Using the Twitter API interface, find the 100 most popular users
-  For each one, create/update a Twitterbot object
-  """
+    Using the Twitter API interface, find the 100 most popular users
+    For each one, create/update a Twitterbot object
+    """
     # Authorize and set up Tweepy
     t = start_tweepy_interface()
     # Use Tweepy to get data
@@ -104,6 +104,10 @@ def clear_twitter_bot(username):
 
 def get_twitter_bot_info(username, include_posts=False):
     bot = get_twitter_bot(username)
+
+    if bot is None:
+        return {}
+
     bot_data = {
         "real_name": bot.real_name,
         "first_name": bot.first_name,
