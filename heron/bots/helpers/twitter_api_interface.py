@@ -15,8 +15,8 @@ class TwitterApiInterface:
         self, consumer_key, consumer_secret, access_token, access_token_secret
     ):
         """
-    Setup, using credentials from Twitter
-    """
+        Setup, using credentials from Twitter
+        """
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
@@ -48,9 +48,9 @@ class TwitterApiInterface:
 
     def find_top_users(self):
         """
-    Use mechanize and beautiful soup to get the data
-    Defaults to the top 100 most popular accounts
-    """
+        Use mechanize and beautiful soup to get the data
+        Defaults to the top 100 most popular accounts
+        """
         people_dict = []
 
         raw_html = self.get_html_data(

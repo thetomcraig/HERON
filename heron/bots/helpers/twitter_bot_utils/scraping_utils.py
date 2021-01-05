@@ -15,7 +15,6 @@ def scrape_twitter_bot(bot):
     Scrape the given user with tweepy
     Clean up all of their tweets and process them
     """
-    logging.debug("Testing")
     response_data = {"success": False}
     return response_data
 
@@ -59,7 +58,7 @@ def scrape(username):
     if not bot:
         return {
             "success": False,
-            "msg": 'Not bot found with username: "{}"'.format(username),
+            "msg": 'No bot found with username: "{}"'.format(username),
         }
 
     scrape_response = scrape_twitter_bot(bot)

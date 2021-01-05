@@ -2,7 +2,8 @@
 Utilities for working with REAL Twitter data and the bot objects
 
 You will see both the phrase "person" and "bot" in this file,
-  as data comes in from REAL people, and is processed and shunted into the bots
+  because the data comes in from REAL persons, 
+  then is processed and shunted into the bots
 """
 from bots.helpers.twitter_api_interface import TwitterApiInterface
 from bots.models.twitter import TwitterBot
@@ -38,7 +39,6 @@ def create_or_update_bot(username, name, avatar):
     bot.real_name = name
     bot.avatar = avatar
     bot.save()
-    # Done, format return dict
     return bot
 
 
@@ -70,11 +70,10 @@ def create_twitter_bot_from_person(username):
 
 
 def create_twitter_bots_for_top_users():
-    # Change name from "user" to "person"
     """
-  Using the Twitter API interface, find the 100 most popular users
-  For each one, create/update a Twitterbot object
-  """
+    Using the Twitter API interface, find the 100 most popular users
+    For each one, create/update a Twitterbot object
+    """
     # Authorize and set up Tweepy
     t = start_tweepy_interface()
     # Use Tweepy to get data
@@ -95,6 +94,9 @@ def create_twitter_bots_for_top_users():
 
 
 def clear_twitter_bot(username):
+    """
+    Given username, get the bot and delete all their posts
+    """
     bot = get_twitter_bot(username)
     if not bot:
         return False
@@ -103,6 +105,9 @@ def clear_twitter_bot(username):
 
 
 def get_twitter_bot_info(username, include_posts=False):
+    """
+    Helper to get metadata for a bot
+    """
     bot = get_twitter_bot(username)
     bot_data = {
         "real_name": bot.real_name,
@@ -122,6 +127,9 @@ def get_twitter_bot_info(username, include_posts=False):
 
 
 def get_bot_attributes(username):
+    """
+    WIP: Helper to get metadata for a bot
+    """
     classifier_metrics = {
         "mention_percentage": -1,
         "retweet_percentage": -1,
