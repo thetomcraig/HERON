@@ -18,7 +18,7 @@ idna==2.6
 ipaddress==1.0.19
 mccabe==0.6.1
 mechanize==0.3.6
-nltk==3.2.5
+nltk==3.4.5
 oauthlib==2.0.6
 psycopg2-binary==2.8.6
 pycodestyle==2.3.1
