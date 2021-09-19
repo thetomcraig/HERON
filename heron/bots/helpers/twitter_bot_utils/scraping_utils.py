@@ -59,7 +59,7 @@ def scrape(username):
     if not bot:
         return {
             "success": False,
-            "msg": 'Not bot found with username: "{}"'.format(username),
+            "msg": 'No bot found with username: "{}"'.format(username),
         }
 
     scrape_response = scrape_twitter_bot(bot)
