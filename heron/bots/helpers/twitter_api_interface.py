@@ -8,15 +8,16 @@ This file uses the "person" convention, because it provides REAL data from REAL 
 import mechanize
 import tweepy
 from bs4 import BeautifulSoup
+import logging
+
+logger = logging.getLogger("django")
 
 
 class TwitterApiInterface:
-    def __init__(
-        self, consumer_key, consumer_secret, access_token, access_token_secret
-    ):
+    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret):
         """
-    Setup, using credentials from Twitter
-    """
+        Setup, using credentials from Twitter
+        """
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
@@ -48,14 +49,12 @@ class TwitterApiInterface:
 
     def find_top_users(self):
         """
-    Use mechanize and beautiful soup to get the data
-    Defaults to the top 100 most popular accounts
-    """
+        Use mechanize and beautiful soup to get the data
+        Defaults to the top 100 most popular accounts
+        """
         people_dict = []
 
-        raw_html = self.get_html_data(
-            "https://friendorfollow.com/twitter/most-followers/"
-        )
+        raw_html = self.get_html_data("https://friendorfollow.com/twitter/most-followers/")
         people_divs = raw_html.findAll("div", {"class": "text-holder"})
         for person in people_divs:
             uname = person.find(class_="mail").next_element.text
@@ -66,12 +65,14 @@ class TwitterApiInterface:
         return people_dict
 
     def get_tweets_from_user(self, username, limit):
+        logger.debug("Scraping tweets with tweepy")
         alltweets = self.tweepy_api.user_timeline(screen_name=username, count=limit)
+        logger.debug("Scraped {} tweets".format(len(alltweets)))
         full_length_tweets = {}
         for tweet in alltweets:
-            full_length_tweet = self.tweepy_api.get_status(
-                tweet.id, tweet_mode="extended"
-            )._json["full_text"]
+            full_length_tweet = self.tweepy_api.get_status(tweet.id, tweet_mode="extended")._json[
+                "full_text"
+            ]
             full_length_tweets[tweet.id] = full_length_tweet.encode("utf-8")
 
         return full_length_tweets

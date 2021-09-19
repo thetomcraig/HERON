@@ -9,15 +9,15 @@ from bots.models.twitter import TwitterBot
 from django.conf import settings
 import logging
 
+logger = logging.getLogger("django")
+
 
 def scrape_twitter_bot(bot):
     """
     Scrape the given user with tweepy
     Clean up all of their tweets and process them
     """
-    logging.debug("Testing")
     response_data = {"success": False}
-    return response_data
 
     t = TwitterApiInterface(
         settings.TWEEPY_CONSUMER_KEY,
@@ -27,13 +27,13 @@ def scrape_twitter_bot(bot):
     )
 
     tweets = t.get_tweets_from_user(bot.username, 100)
+    num_tweets = len(tweets)
 
-    response_data["num_new_tweets"] = len(tweets)
-    response_data["new_tweets"] = {
-        idx: tweet for (idx, tweet) in enumerate(tweets.values())
-    }
+    response_data["num_new_tweets"] = num_tweets
+    response_data["new_tweets"] = {idx: tweet for (idx, tweet) in enumerate(tweets.values())}
 
     process_new_tweets(bot, tweets)
+    logger.debug("Processed {} new tweets".format(num_tweets))
 
     response_data["success"] = True
 

@@ -5,6 +5,9 @@ from django.db import models
 import base
 
 
+logger = logging.getLogger("django")
+
+
 class TwitterBot(base.Bot):
     def __str__(self):
         return self.username
@@ -40,11 +43,13 @@ class TwitterPostCache(models.Model):
         )
 
     @classmethod
-    def create(cls, beginning, cache_tuple, template_tuple):
+    def create_with_tuples(cls, bot, beginning, cache_tuple, template_tuple):
         cache = base.SentenceCache(beginning=beginning, *cache_tuple)
         template_cache = base.SentenceCache(beginning=beginning, *template_tuple)
-        twitter_post_cache = cls(beginning=beginning, cache=cache, template_cache=template_cache)
-        logging.debug("Created: \n{}".format(str(cls)))
+        twitter_post_cache = cls(
+            author=bot, beginning=beginning, cache=cache, template_cache=template_cache
+        )
+        logger.debug("Created: \n{}".format(cls.__str__()))
         return twitter_post_cache
 
 
