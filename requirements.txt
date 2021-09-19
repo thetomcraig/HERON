@@ -17,7 +17,7 @@ html5lib==0.999999999
 idna==2.6
 ipaddress==1.0.19
 mccabe==0.6.1
-mechanize==0.3.6
+#mechanize==0.3.6
 nltk==3.2.5
 oauthlib==2.0.6
 psycopg2-binary==2.8.6
