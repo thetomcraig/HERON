@@ -4,8 +4,6 @@ import dj_database_url
 
 from django.core.management.utils import get_random_secret_key
 
-from heron import local_settings
-
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -125,7 +123,8 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {"handlers": ["console"], "level": local_settings.LOG_LEVEL},
+        "django": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "DEBUG")},
+
     },
 }
 
@@ -137,9 +136,9 @@ USER_TOKEN = "<<user>>"
 LINK_TOKEN = "<<link>>"
 TAG_TOKEN = "<<tag>>"
 
-# One of: ["markov_chain"]
-TEXT_GENERATION_FUNCTION = local_settings.text_generation_function
+TEXT_GENERATION_FUNCTION = "markov_chain"
 
+'''
 TWEEPY_CONSUMER_KEY = local_settings.tweepy_consumer_key
 TWEEPY_CONSUMER_SECRET = local_settings.tweepy_consumer_secret
 TWEEPY_ACCESS_TOKEN = local_settings.tweepy_access_token
@@ -154,3 +153,4 @@ WATSON_EMOTIONS = ["anger", "joy", "sadness", "fear", "disgust"]
 
 DISCORD_CONVERSATION_NAME = local_settings.discord_conversation_name
 DISCORD_CONVERSATION_STATES = local_settings.discord_conversation_states
+'''
