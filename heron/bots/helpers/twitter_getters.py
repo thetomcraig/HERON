@@ -4,10 +4,10 @@ Functions can control the way in which reply chains are parsed,
 and return tweets and replys that march specific critera
 """
 # TODO, this should be moved under the "twitter aspi interface" umbrella
-import mechanize
+#import mechanize
 from bots.models.twitter import TwitterBot, TwitterPost
 from bs4 import BeautifulSoup
-import watson_utils
+from . import watson_utils
 
 
 def get_tweet_replies(username, tweet_id):
@@ -18,6 +18,7 @@ def get_tweet_replies(username, tweet_id):
     Output:
         replies to that tweet
     """
+    # TODO, mechanize does not support python 3
     browser = mechanize.Browser()
     ua = "Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 (compatible;)"
     browser.addheaders = [("User-Agent", ua), ("Accept", "*/*")]
@@ -68,10 +69,10 @@ def get_all_replies(username, tweet_id, max_iterations=None):
                         }
             }
     """
-    print "calling get_all_replies with {}".format(tweet_id)
+    print("calling get_all_replies with {}".format(tweet_id))
     replies = {}
     all_responses = get_tweet_replies(username, tweet_id)
-    print "got responses: {}".format(all_responses)
+    print("got responses: {}".format(all_responses))
 
     if len(all_responses) == 0:
         return replies
@@ -82,7 +83,7 @@ def get_all_replies(username, tweet_id, max_iterations=None):
             if iterations > max_iterations:
                 return replies
 
-        print "initiate call for {}".format(reply_id)
+        print("initiate call for {}".format(reply_id))
         replies[reply_id] = {
             "author": response_data["author"],
             "content": response_data["content"],
@@ -108,8 +109,6 @@ def single_reply(username, tweet_id):
     """
     replies = {}
     all_responses = get_tweet_replies(username, tweet_id)
-    print "all responses"
-    print all_responses
 
     if len(all_responses) == 0:
         return replies
@@ -167,7 +166,7 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(
         reply_data = get_tweet_replies(username, tweet.tweet_id)
         num_replies = len(reply_data)
         if num_replies >= threshold:
-            print ("lots of replies; analyzing")
+            print("lots of replies; analyzing")
             (
                 overarching_emotion,
                 keywords_list,
@@ -179,7 +178,7 @@ def get_tweets_over_reply_threshold_and_analyze_text_understanding(
                 "content": tweet.content,
                 "overarching_emotion": overarching_emotion,
             }
-            print ("recursing")
+            print("recursing")
             tweets_over_threshold[tweet.tweet_id].update(
                 {"replies": reply_function(username, tweet.tweet_id)}
             )

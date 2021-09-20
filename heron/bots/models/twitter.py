@@ -2,7 +2,7 @@
 import logging
 from django.db import models
 
-import base
+from . import base
 
 
 logger = logging.getLogger("django")

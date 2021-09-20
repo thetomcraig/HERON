@@ -1,4 +1,5 @@
-import HTMLParser
+# TODO: package showing issues with python 3
+#import HTMLParser
 import logging
 from bots.models.twitter import (
     TwitterPost,

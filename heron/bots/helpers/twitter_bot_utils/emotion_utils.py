@@ -40,7 +40,7 @@ def add_new_tweets_to_emotion_bot(params):
     scrape_mode = "single_reply"
 
     for username in twitter_source_users:
-        print "getting responses for source user: %s" % username
+        print("getting responses for source user: %s" % username)
         response_data = get_tweets_over_reply_threshold_and_analyze_text_understanding(
             username,
             scrape_mode,

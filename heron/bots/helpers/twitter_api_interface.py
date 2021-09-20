@@ -5,7 +5,7 @@ Uses mechanize+BeautifulSoup to get reply chains and top users
 
 This file uses the "person" convention, because it provides REAL data from REAL twitter accounts
 """
-import mechanize
+#import mechanize
 import tweepy
 from bs4 import BeautifulSoup
 import logging
@@ -29,6 +29,7 @@ class TwitterApiInterface:
         self.tweepy_api = tweepy.API(self.auth)
 
     def setup_browser(self):
+        # TODO: mechanize does not support python 3
         browser = mechanize.Browser()
         ua = "Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 (compatible;)"
         browser.addheaders = [("User-Agent", ua), ("Accept", "*/*")]

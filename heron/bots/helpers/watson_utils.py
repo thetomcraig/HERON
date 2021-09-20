@@ -6,12 +6,15 @@ import json
 
 import requests
 from django.conf import settings
+# TODO: this package is having issues with python 3
+"""
 from watson_developer_cloud import NaturalLanguageUnderstandingV1
 from watson_developer_cloud.natural_language_understanding_v1 import (
     EntitiesOptions,
     Features,
     KeywordsOptions,
 )
+"""
 
 
 def interpret_watson_keywords_and_entities(text):
@@ -157,8 +160,8 @@ def watson_analyze_text_understanding(text):
             ),
         )
     except Exception as e:
-        print e
-        print "Proceeding without the watson data"
+        print(e)
+        print("Proceeding without the watson data")
 
     return response
 

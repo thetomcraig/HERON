@@ -16,7 +16,7 @@ def markov_chain(bot_id, previous_posts):
     beginning_caches = bot.twitterpostcache_set.filter(beginning=True)
 
     if not len(beginning_caches):
-        print "Not enough data"
+        print("Not enough data")
         return
 
     # Randomly choose one of the beginning caches to start with
@@ -131,11 +131,11 @@ def replace_tokens(word_list_and_randomness, token, model_set):
                 seed_index = random.randint(0, len(model_set) - 1)
             try:
                 word_list[word_index] = (model_set[seed_index]).content
-                print "Replaced " + token
+                print("Replaced " + token)
 
             except IndexError:
-                print "failed to replace token:"
-                print word_list[word_index]
+                print("failed to replace token:")
+                print(word_list[word_index])
 
     return (word_list, word_list_and_randomness[1])
 
