@@ -1,0 +1,42 @@
+alerts:
+- rule: DEPLOYMENT_FAILED
+- rule: DOMAIN_FAILED
+databases:
+- engine: PG
+  name: db
+  num_nodes: 1
+  size: db-s-dev-database
+  version: "12"
+name: heron
+region: nyc
+services:
+- environment_slug: python
+  envs:
+  - key: DJANGO_ALLOWED_HOSTS
+    scope: RUN_AND_BUILD_TIME
+    value: ${APP_DOMAIN}
+  - key: DATABASE_URL
+    scope: RUN_AND_BUILD_TIME
+    value: ${db.DATABASE_URL}
+  - key: DEBUG
+    scope: RUN_AND_BUILD_TIME
+    value: "True"
+  - key: DJANGO_SECRET_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: EV[1:4QDUxuLAlXI3oJQg/imnhroecAUMrkZ0:eCzjlT7WoW55B/5M2s+7n2fcOapz5bSeM3e993wu2hk=]
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${db.DATABASE_URL}
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: thetomcraig/HERON
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: basic-xs
+  name: heron
+  routes:
+  - path: /
+  run_command: cd heron && gunicorn --worker-tmp-dir /dev/shm heron.wsgi
+  source_dir: /
