@@ -29,7 +29,7 @@ pysolr==3.7.0
 python-dateutil==2.6.1
 pytz==2017.2
 rake-nltk==1.0.1
-requests==2.18.4
+requests==2.20.0
 requests-oauthlib==0.8.0
 six==1.11.0
 tweepy==3.5.0
